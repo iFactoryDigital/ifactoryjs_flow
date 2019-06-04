@@ -1,0 +1,97 @@
+.card.card-flow,
+.card.card-flowing {
+
+  &.card-flow,
+  &.card-flowing .card-header {
+    line-height : ($spacer * 4);
+  }
+
+  &.card-flow .card-body,
+  &.card-flowing .card-header {
+    position       : relative;
+    margin-left    : ($spacer * 4);
+    padding-top    : 0;
+    padding-bottom : 0;
+  }
+  &.card-flowing .card-header {
+    margin       : 0;
+    padding-left : ($spacer * 4) + $card-spacer-x;
+  }
+  
+  .card-icon {
+    top      : 0;
+    left     : 0;
+    width    : ($spacer * 4);
+    bottom   : 0;
+    position : absolute;
+
+    > i {
+      top           : 50%;
+      left          : 50%;
+      width         : ($spacer * 2.5);
+      height        : ($spacer * 2.5);
+      position      : absolute;
+      transform     : translateX(-50%) translateY(-50%);
+      text-align    : center;
+      line-height   : ($spacer * 2.5);
+      border-radius : 50%;
+    }
+  }
+
+  .card-body,
+  .card-header {
+    .btn.dropdown-toggle.btn-light {
+      background   : rgba(theme-color(primary), 0.15);
+      border-color : rgba(theme-color(primary), 0.15);
+    }
+  }
+
+  &.card-trigger {
+    border-color      : $gray-500;
+    border-left-width : ($border-width * 4);
+
+    .card-icon {
+      background : rgba($black, 0.1);
+
+      > i {
+        background : rgba($black, 0.1);
+      }
+    }
+  }
+  &.card-action {
+    border-color      : theme-color(primary);
+    border-left-width : ($border-width * 4);
+
+    .card-icon {
+      background : rgba(theme-color(primary), 0.15);
+
+      > i {
+        background : rgba(theme-color(primary), 0.15);
+      }
+    }
+  }
+  &.card-logic {
+    border-color      : theme-color(warning);
+    border-left-width : ($border-width * 4);
+
+    .card-icon {
+      background : rgba(theme-color(warning), 0.15);
+
+      > i {
+        background : rgba(theme-color(warning), 0.15);
+      }
+    }
+  }
+  &.card-timing {
+    border-color      : theme-color(success);
+    border-left-width : ($border-width * 4);
+
+    .card-icon {
+      background : rgba(theme-color(success), 0.15);
+
+      > i {
+        background : rgba(theme-color(success), 0.15);
+      }
+    }
+  }
+}
