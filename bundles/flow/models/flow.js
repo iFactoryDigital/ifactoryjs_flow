@@ -60,7 +60,7 @@ class Flow extends Model {
         const action = Object.assign(item.opts || {}, item);
 
         // messy render
-        await field.render(action, data);
+        if (field) await field.render(action, data);
 
         // render data
         sanitised.render[item.uuid] = data;

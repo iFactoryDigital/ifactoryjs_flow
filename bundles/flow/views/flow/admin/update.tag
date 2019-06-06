@@ -80,7 +80,7 @@
             <div class="flow-inner" style="{ this.width ? 'width : ' + this.width + 'rem' : '' }">
               <!-- trigger -->
 
-              <div class="card card-flowing card-trigger bg-light mb-4">
+              <div class="card card-flowing card-trigger bg-light mb-4" ref="trigger">
                 <div class="card-header">
                   <div class="card-icon">
                     <i class="fa fa-bolt" />
@@ -260,17 +260,11 @@
         target = jQuery(target);
         source = jQuery(source);
 
-        // check position
-        if (jQuery(el).attr('position')) {
-          // delete from position
-          this.flow.tree = dotProp.delete(this.flow.tree, jQuery(el).attr('position'));
-        }
-
         // set position
         const position = target.attr('position') || '';
         const elements = await Promise.all(jQuery('> .flow-element, > .card-flow', target).toArray().map(async (el, i) => {
           // set values
-          const currentPos  = jQuery(el).attr('position');
+          const currentPos  = jQuery(el).attr('position') || '';
           const currentUuid = jQuery(el).attr('uuid');
           const currentItem = (currentUuid ? this.flow.items.find(item => item.uuid === currentUuid) : {}) || {};
           const currentTree = (currentUuid ? (currentPos.includes('.') ? dotProp.get(this.flow.tree, currentPos) : this.flow.tree[currentPos]) : {}) || {};
@@ -305,6 +299,12 @@
           // return element
           return element;
         }));
+
+        // check position
+        if (jQuery(el).attr('position')) {
+          // delete from position
+          this.flow.tree = dotProp.delete(this.flow.tree, jQuery(el).attr('position'));
+        }
 
         // in parent
         if (!(position || '').length) {
@@ -417,6 +417,68 @@
     }
 
     /**
+     * Initialize draggable logic 
+     */
+    initConnectors() {
+      // return refreshing
+      if (this.refreshing) return;
+
+      // require plumb
+      const plumb = require('jsplumb');
+
+      // get instance
+      this.plumb = this.plumb || jsPlumb.getInstance();
+
+      // import defaults
+      this.plumb.importDefaults({
+        Anchors : [[ 0.5, 1, 1, 1 ], [ 0.1, 0.2, 1, 1 ]],
+        Connector : [ 'StateMachine', { } ],
+        ConnectionsDetachable : false
+      });
+
+      // set container
+      this.plumb.setContainer(this.refs['flow-container']);
+
+      // delete everything
+      this.plumb.deleteEveryConnection();
+
+      // check width
+      addConnectors = (children, parent, position) => {
+        // loop children
+        for (let i = 0; i < children.length; i++) {
+          // set el
+          const el = jQuery(`.flow-element[position="${(position.length ? position + '.' : '') + i}"] > .card`)[0];
+          const pos = (position.length ? position + '.' : '') + i;
+
+          // connect
+          this.plumb.connect({
+            scope      : position,
+            source     : parent, 
+            target     : el,
+            overlays   : [['Arrow', { location : 1 }]],
+            endpoints  : ['Dot', 'Blank'],
+            detachable : false
+          });
+
+          // do children
+          Object.keys(children[i].children || {}).forEach((col) => {
+            // add connectors to children
+            addConnectors(children[i].children[col], el, pos + '.children.' + col);
+          });
+
+          // set parent
+          parent = el;
+        }
+      };
+
+      // add connectors
+      const top = this.refs['flow-container'].scrollTop;
+      this.refs['flow-container'].scrollTop = 0;
+      addConnectors(this.flow.tree, this.refs.trigger, '');
+      this.refs['flow-container'].scrollTop = top;
+    }
+
+    /**
      * saves flow
      */
     async save() {
@@ -462,17 +524,24 @@
 
       // on resize
       jQuery(window).on('resize', this.initScrollbar);
+
+      // timeout
+      setTimeout(() => {
+        // init connectors
+        this.initConnectors();
+      }, 500);
     });
 
     /**
      * On mount
      */
-    this.on('update', () => {
+    this.on('updated', () => {
       // check frontend
       if (!this.eden.frontend) return; 
 
       // do draggable
       this.initScrollbar();
+      this.initConnectors();
     });
 
     /**
