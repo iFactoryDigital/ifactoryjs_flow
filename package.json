@@ -2,7 +2,9 @@
   "name": "@edenjs/flow",
   "description": "nothing yet",
   "version": "1.0.0",
-  "dependencies": {},
+  "dependencies": {
+    "perfect-scrollbar": "^1.4.0"
+  },
   "engines": {
     "node": ">= 8.0.0"
   },

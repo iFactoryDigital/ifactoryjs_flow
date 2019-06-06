@@ -22,13 +22,51 @@ class Flow extends Model {
    *
    * @return {*}
    */
-  async sanitise() {
+  async sanitise(helper) {
     // return object
     const sanitised = {
       id         : this.get('_id') ? this.get('_id').toString() : null,
+      tree       : this.get('tree') || [],
+      items      : this.get('items') || [],
+      trigger    : this.get('trigger'),
       created_at : this.get('created_at'),
       updated_at : this.get('updated_at'),
     };
+
+    // render
+    if (helper) {
+      // set render
+      sanitised.render = {};
+
+      // await promise
+      await Promise.all(sanitised.items.map(async (item) => {
+        // set fields
+        let fields = [];
+
+        // check for
+        if (item.for === 'action') {
+          fields = helper.actions();
+        } else if (item.for === 'timing') {
+          fields = helper.timings();
+        } else if (item.for === 'logic') {
+          fields = helper.logics();
+        }
+
+        // get field
+        const field = fields.find(f => f.type === item.type);
+
+        // get data
+        const data = {};
+        const action = Object.assign(item.opts || {}, item);
+
+        // messy render
+        await field.render(action, data);
+
+        // render data
+        sanitised.render[item.uuid] = data;
+      }));
+    }
+
 
     // await hook
     await this.eden.hook('flow.sanitise', {

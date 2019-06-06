@@ -110,9 +110,61 @@ class FlowAdminController extends Controller {
 
     // Render page
     res.render('flow/admin/update', {
-      flow   : await flow.sanitise(),
+      flow   : await flow.sanitise(this.__helper),
       title  : create ? 'Create Flow' : `Update ${flow.get('_id')}`,
       config : await this.__helper.render(),
+    });
+  }
+
+  /**
+   * Index action
+   *
+   * @param {Request}  req
+   * @param {Response} res
+   *
+   * @title    Notification Administration
+   * @route    {post} /create
+   * @route    {post} /:id/update
+   * @layout   admin
+   * @priority 10
+   */
+  async submitAction(req, res) {
+    // await building
+    await this.building;
+
+    // Set website variable
+    let flow = new Flow();
+    let create = true;
+
+    // Check for website model
+    if (req.params.id) {
+      // Load by id
+      flow = await Flow.findById(req.params.id);
+      create = false;
+    }
+
+    // set
+    flow.set('tree', req.body.tree);
+    flow.set('items', req.body.items);
+    flow.set('trigger', req.body.trigger);
+
+    // save flow
+    await flow.save();
+
+    // Render page
+    if (!req.query.json) {
+      // return render
+      res.render('flow/admin/update', {
+        flow   : await flow.sanitise(this.__helper),
+        title  : create ? 'Create Flow' : `Update ${flow.get('_id')}`,
+        config : await this.__helper.render(),
+      });
+    }
+
+    // return json
+    res.json({
+      result  : await flow.sanitise(this.__helper),
+      success : true,
     });
   }
 
@@ -159,6 +211,46 @@ class FlowAdminController extends Controller {
     }));
   }
 
+  /**
+   * field action
+   *
+   * @param req
+   * @param res
+   *
+   * @acl   admin
+   * @fail  next
+   * @route {POST} /field
+   */
+  async fieldAction(req, res) {
+    // get fields
+    let fields = [];
+
+    // check for
+    if (req.body.for === 'action') {
+      fields = this.__helper.actions();
+    } else if (req.body.for === 'timing') {
+      fields = this.__helper.timings();
+    } else if (req.body.for === 'logic') {
+      fields = this.__helper.logics();
+    }
+
+    // get field
+    const field = fields.find(f => f.type === req.body.type);
+
+    // get data
+    const data = {};
+    const action = Object.assign(field.opts, req.body);
+
+    // messy render
+    await field.render(action, data);
+
+    // return json
+    return res.json({
+      result  : { data, action },
+      success : true,
+    });
+  }
+
 
   // ////////////////////////////////////////////////////////////////////////////
   //
@@ -200,6 +292,7 @@ class FlowAdminController extends Controller {
 
     // do initial actions
     flow.action('event.trigger', {
+      tag   : 'action-event',
       icon  : 'fa fa-play',
       title : 'Trigger Event',
     }, (action, render) => {
@@ -208,6 +301,7 @@ class FlowAdminController extends Controller {
 
     });
     flow.action('hook.trigger', {
+      tag   : 'action-hook',
       icon  : 'fa fa-calendar-exclamation',
       title : 'Trigger Hook',
     }, (action, render) => {
@@ -218,6 +312,7 @@ class FlowAdminController extends Controller {
 
     // do initial timings
     flow.timing('delay', {
+      tag   : 'timing-delay',
       icon  : 'fa fa-stopwatch',
       title : 'Time Delay',
     }, (action, render) => {
@@ -227,7 +322,17 @@ class FlowAdminController extends Controller {
     });
 
     // do initial logics
+    flow.logic('filter', {
+      tag   : 'logic-filter',
+      icon  : 'fa fa-filter',
+      title : 'Conditional Filter',
+    }, (action, render) => {
+
+    }, (action, body) => {
+
+    });
     flow.logic('condition.split', {
+      tag   : 'logic-split',
       icon  : 'fa fa-code-merge',
       title : 'Conditional Split',
     }, (action, render) => {

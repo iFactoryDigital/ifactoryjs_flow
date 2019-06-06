@@ -9,7 +9,9 @@
     
     the model
 
-    <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeModel } url="/admin/flow/models" placeholder="Select Model" />
+    <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeModel } url="/admin/flow/models" model={ this.data.model } placeholder="Select Model">
+      <option if={ opts.model } value={ opts.model } selected>{ opts.model }</option>
+    </eden-select>
 
     has been
 
@@ -22,7 +24,7 @@
 
   <script>
     // set data
-    this.data = opts.trigger.data || {};
+    this.data = opts.item.data || {};
 
     /**
      * on change when
