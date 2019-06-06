@@ -23,7 +23,7 @@
                 Drag and drop components to build your flow.
               </small>
             </div>
-            <div class="card-body">
+            <div class="card-body" if={ !this.refreshing }>
               <p class="lead mb-3">
                 Actions
               </p>
@@ -235,6 +235,9 @@
           return jQuery(container).hasClass('builder-elements');
         }
       }).on('drop', async (el, target, source, sibling) => {
+        // set update
+        this.hasUpdate = true;
+
         // check if drop to left
         if (jQuery(el).closest('.builder-elements').length) {
           // check position
@@ -264,16 +267,25 @@
         }
 
         // set position
-        const position = target.attr('position');
+        const position = target.attr('position') || '';
         const elements = await Promise.all(jQuery('> .flow-element, > .card-flow', target).toArray().map(async (el, i) => {
+          // set values
+          const currentPos  = jQuery(el).attr('position');
+          const currentUuid = jQuery(el).attr('uuid');
+          const currentItem = (currentUuid ? this.flow.items.find(item => item.uuid === currentUuid) : {}) || {};
+          const currentTree = (currentUuid ? (currentPos.includes('.') ? dotProp.get(this.flow.tree, currentPos) : this.flow.tree[currentPos]) : {}) || {};
+
           // set priority
-          let element = Object.assign(dotProp.get(this.flow.tree, ((position || '').length ? position + '.' : '') + i) || {}, this.flow.items.find(item => item.uuid === jQuery(el).attr('uuid')) || {}, {
+          let element = Object.assign(currentItem, currentTree, {
             priority : i,
           });
 
           // set uuid
-          if (!element.type) element.for  = jQuery(el).attr('for');
-          if (!element.type) element.type = jQuery(el).attr('type');
+          if (!element.type) {
+            // set values
+            element.for  = jQuery(el).attr('for');
+            element.type = jQuery(el).attr('type');
+          } 
 
           // set uuid
           if (!element.uuid) {
@@ -335,9 +347,6 @@
 
         // flatten tree
         this.flow.items = flatten(this.flow.tree);
-
-        // set update
-        this.hasUpdate = true;
 
         // update
         this.refreshing = true;
@@ -416,8 +425,6 @@
 
       // load
       const flow = (await eden.router.post(`/admin/flow/${this.flow.id ? this.flow.id + '/update?json=true' : 'create?json=true'}`, this.flow)).result;
-
-      console.log(flow);
 
       // set flow
       this.flow = flow;
