@@ -8,18 +8,18 @@
   }
 
   &.card-flow,
-  &.card-flowing .card-header {
+  &.card-flowing > .card-header {
     line-height : ($spacer * 4);
   }
 
-  &.card-flow .card-body,
-  &.card-flowing .card-header {
+  &.card-flow > .card-body,
+  &.card-flowing > .card-header {
     position       : relative;
     margin-left    : ($spacer * 4);
     padding-top    : 0;
     padding-bottom : 0;
   }
-  &.card-flowing .card-header {
+  &.card-flowing > .card-header {
     margin       : 0;
     padding-left : ($spacer * 4) + $card-spacer-x;
   }

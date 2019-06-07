@@ -1,13 +1,17 @@
 
 // Require dependencies
 const Grid       = require('grid');
+const tmpl       = require('riot-tmpl');
+const Model      = require('model');
+const safeEval   = require('safe-eval');
 const Controller = require('controller');
 
 // Require models
 const Flow = model('flow');
 
 // flow helper
-const FlowHelper = helper('flow');
+const FlowHelper  = helper('flow');
+const emailHelper = helper('email');
 
 /**
  * Build customer controller
@@ -26,6 +30,10 @@ class FlowAdminController extends Controller {
 
     // build customer admin controller
     this.build = this.build.bind(this);
+
+    // bind hooks
+    this.modelHook = this.modelHook.bind(this);
+    this.flowSetupHook = this.flowSetupHook.bind(this);
 
     // set building
     this.building = this.build();
@@ -270,7 +278,7 @@ class FlowAdminController extends Controller {
       title : 'Named Hook',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, (opts, element, ...args) => {
 
     });
     flow.trigger('event', {
@@ -278,7 +286,7 @@ class FlowAdminController extends Controller {
       title : 'Named Event',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, (opts, element, ...args) => {
 
     });
     flow.trigger('model', {
@@ -286,7 +294,7 @@ class FlowAdminController extends Controller {
       title : 'Model Change',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, (opts, element, ...args) => {
 
     });
 
@@ -297,8 +305,41 @@ class FlowAdminController extends Controller {
       title : 'Trigger Event',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, (opts, element, ...args) => {
+      // trigger event
+      if ((element.config || {}).event) {
+        // trigger event
+        this.eden.emit(`flow:event.${element.config.event}`, ...args);
+      }
 
+      // return true
+      return true;
+    });
+    // do initial actions
+    flow.action('email.send', {
+      tag   : 'action-email',
+      icon  : 'fa fa-envelope',
+      title : 'Send Email',
+    }, (action, render) => {
+
+    }, async (opts, element, model) => {
+      // set config
+      element.config = element.config || {};
+
+      // send model
+      if (model instanceof Model) {
+        // sanitise model
+        model = await model.sanitise();
+      }
+
+      // send email
+      await emailHelper.send((tmpl.tmpl(element.config.to || '', model)).split(',').map(i => i.trim()), 'blank', {
+        body    : tmpl.tmpl(element.config.body || '', model),
+        subject : tmpl.tmpl(element.config.subject || '', model),
+      });
+
+      // return true
+      return true;
     });
     flow.action('hook.trigger', {
       tag   : 'action-hook',
@@ -306,8 +347,15 @@ class FlowAdminController extends Controller {
       title : 'Trigger Hook',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, async (opts, element, ...args) => {
+      // trigger event
+      if ((element.config || {}).hook) {
+        // trigger event
+        await this.eden.hook(`flow:hook.${element.config.hook}`, ...args);
+      }
 
+      // return true
+      return true;
     });
 
     // do initial timings
@@ -317,9 +365,52 @@ class FlowAdminController extends Controller {
       title : 'Time Delay',
     }, (action, render) => {
 
-    }, (action, body) => {
-
+    }, (opts, element, ...args) => {
+      return true;
     });
+
+    // boolean check
+    const filterCheck = async (opts, element, model) => {
+      // set config
+      element.config = element.config || {};
+
+      // check model
+      if ((element.config.type || 'value') === 'code') {
+        // safe eval code
+        return !!safeEval(element.config.code, model);
+      }
+
+      // get value
+      let value = model[element.config.of];
+      const is = element.config.is || 'eq';
+
+      // check model
+      if (model instanceof Model) {
+        // get value from model
+        value = await model.get(element.config.of);
+      }
+
+      // check
+      if (is === 'eq' && value !== element.config.value) {
+        // return false
+        return false;
+      }
+      if (is === 'ne' && value === element.config.value) {
+        // return false
+        return false;
+      }
+      if (is === 'gt' && value < element.config.value) {
+        // return false
+        return false;
+      }
+      if (is === 'lt' && value > element.config.value) {
+        // return false
+        return false;
+      }
+
+      // return false at every opportunity
+      return true;
+    };
 
     // do initial logics
     flow.logic('filter', {
@@ -328,18 +419,78 @@ class FlowAdminController extends Controller {
       title : 'Conditional Filter',
     }, (action, render) => {
 
-    }, (action, body) => {
-
-    });
+    }, filterCheck);
     flow.logic('condition.split', {
       tag   : 'logic-split',
       icon  : 'fa fa-code-merge',
       title : 'Conditional Split',
     }, (action, render) => {
 
-    }, (action, body) => {
+    }, async (opts, element, ...args) => {
+      // set go
+      const go = await filterCheck(opts, element, ...args);
 
+      // get children
+      const children = (element.children || [])[go ? 0 : 1] || [];
+
+      // await trigger
+      await this.__helper.run(opts.flow, children, opts, ...args);
+
+      // return true
+      return true;
     });
+  }
+
+  /**
+   * setup flow hook
+   *
+   * @pre *.update
+   * @pre *.remove
+   * @pre *.create
+   * @post *.update
+   * @post *.create
+   * @post *.remove
+   */
+  async modelHook(model, a, b) {
+    // check model
+    if (!(model instanceof Model)) return;
+
+    // set vars
+    let hook;
+    let type;
+
+    // chec vars
+    if (!b) {
+      hook = a.hook;
+      type = a.type;
+    } else {
+      hook = b.hook;
+      type = b.type;
+    }
+
+    // check
+    if (!hook || !type) return;
+
+    // get model type
+    const modelName = hook.split('.')[0];
+    const updateType = hook.split('.')[1];
+
+    // query for triggers
+    const triggers = await Flow.where({
+      'trigger.type'       : 'model',
+      'trigger.data.when'  : type === 'pre' ? 'before' : 'after',
+      'trigger.data.model' : modelName,
+      'trigger.data.event' : updateType,
+    }).find();
+
+    // do triggers
+    if (triggers.length) {
+      // trigger flows
+      await Promise.all(triggers.map((trigger) => {
+        // trigger model update
+        return this.__helper.run(trigger, trigger.get('tree'), { type : updateType, name : modelName, when : type === 'pre' ? 'before' : 'after' }, model);
+      }));
+    }
   }
 
   // ////////////////////////////////////////////////////////////////////////////

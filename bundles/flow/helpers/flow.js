@@ -43,17 +43,49 @@ class FlowHelper extends Helper {
   }
 
   /**
+   * runs flow
+   *
+   * @param {Flow}   flow 
+   * @param {Object} opts 
+   * @param {...any} args 
+   */
+  async run(flow, elements, opts, ...args) {
+    // loop elements
+    for (const element of elements) {
+      // get fields
+      let fields = [];
+
+      // get element from here
+      if (element.for === 'action') {
+        fields = this.actions();
+      } else if (element.for === 'timing') {
+        fields = this.timings();
+      } else if (element.for === 'logic') {
+        fields = this.logics();
+      }
+
+      // find field
+      const field = await fields.find(f => f.type === element.type);
+
+      // return if field not found
+      if (!field) return;
+
+      // break flow if not true
+      if (await field.run(Object.assign({}, { flow }, opts), Object.assign({}, element, flow.get('items').find(i => i.uuid === element.uuid)), ...args) !== true) return;
+    }
+  }
+
+  /**
    * register field
    *
    * @param  {String}   type
    * @param  {Object}   opts
    * @param  {Function} render
-   * @param  {Function} save
-   * @param  {Function} submit
+   * @param  {Function} run
    *
    * @return {*}
    */
-  trigger(type, opts, render, save) {
+  trigger(type, opts, render, run) {
     // check found
     const found = this.__triggers.find(field => field.type === type);
 
@@ -61,16 +93,16 @@ class FlowHelper extends Helper {
     if (!found) {
       // check found
       this.__triggers.push({
+        run,
         type,
         opts,
-        save,
         render,
       });
     } else {
       // set on found
+      found.run = run;
       found.type = type;
       found.opts = opts;
-      found.save = save;
       found.render = render;
     }
   }
@@ -81,12 +113,11 @@ class FlowHelper extends Helper {
    * @param  {String}   type
    * @param  {Object}   opts
    * @param  {Function} render
-   * @param  {Function} save
-   * @param  {Function} submit
+   * @param  {Function} run
    *
    * @return {*}
    */
-  action(type, opts, render, save) {
+  action(type, opts, render, run) {
     // check found
     const found = this.__actions.find(field => field.type === type);
 
@@ -94,16 +125,16 @@ class FlowHelper extends Helper {
     if (!found) {
       // check found
       this.__actions.push({
+        run,
         type,
         opts,
-        save,
         render,
       });
     } else {
       // set on found
+      found.run = run;
       found.type = type;
       found.opts = opts;
-      found.save = save;
       found.render = render;
     }
   }
@@ -114,12 +145,11 @@ class FlowHelper extends Helper {
    * @param  {String}   type
    * @param  {Object}   opts
    * @param  {Function} render
-   * @param  {Function} save
-   * @param  {Function} submit
+   * @param  {Function} run
    *
    * @return {*}
    */
-  timing(type, opts, render, save) {
+  timing(type, opts, render, run) {
     // check found
     const found = this.__timings.find(field => field.type === type);
 
@@ -127,16 +157,16 @@ class FlowHelper extends Helper {
     if (!found) {
       // check found
       this.__timings.push({
+        run,
         type,
         opts,
-        save,
         render,
       });
     } else {
       // set on found
+      found.run = run;
       found.type = type;
       found.opts = opts;
-      found.save = save;
       found.render = render;
     }
   }
@@ -147,12 +177,11 @@ class FlowHelper extends Helper {
    * @param  {String}   type
    * @param  {Object}   opts
    * @param  {Function} render
-   * @param  {Function} save
-   * @param  {Function} submit
+   * @param  {Function} run
    *
    * @return {*}
    */
-  logic(type, opts, render, save) {
+  logic(type, opts, render, run) {
     // check found
     const found = this.__logics.find(field => field.type === type);
 
@@ -160,16 +189,16 @@ class FlowHelper extends Helper {
     if (!found) {
       // check found
       this.__logics.push({
+        run,
         type,
         opts,
-        save,
         render,
       });
     } else {
       // set on found
+      found.run = run;
       found.type = type;
       found.opts = opts;
-      found.save = save;
       found.render = render;
     }
   }

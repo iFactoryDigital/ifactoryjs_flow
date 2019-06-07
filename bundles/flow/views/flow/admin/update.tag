@@ -185,6 +185,8 @@
       // return nothing
       const item = this.flow.items.find(i => i.uuid === id);
 
+      console.log(id, item, el);
+
       // loop keys
       for (let key in el) {
         // set value
@@ -266,11 +268,10 @@
           // set values
           const currentPos  = jQuery(el).attr('position') || '';
           const currentUuid = jQuery(el).attr('uuid');
-          const currentItem = (currentUuid ? this.flow.items.find(item => item.uuid === currentUuid) : {}) || {};
           const currentTree = (currentUuid ? (currentPos.includes('.') ? dotProp.get(this.flow.tree, currentPos) : this.flow.tree[currentPos]) : {}) || {};
 
           // set priority
-          let element = Object.assign(currentItem, currentTree, {
+          let element = Object.assign(currentTree, {
             priority : i,
           });
 
@@ -315,38 +316,8 @@
           this.flow.tree = dotProp.set(this.flow.tree, position, elements);
         }
 
-        // flattens a tree
-        const flatten = (children) => {
-          // get arr
-          const arr = [];
-
-          // return mappend children
-          children.map((child) => {
-            // set children
-            if (child.children) {
-              // loop children
-              for (let key in child.children) {
-                // push to flattened array
-                arr.push(...(flatten(child.children[key])));
-              }
-            }
-
-            // clone child
-            const cloneChild = JSON.parse(JSON.stringify(Object.assign({}, child, this.flow.items.find(item => item.uuid === child.uuid) || {})));
-
-            // delete fields
-            delete cloneChild.children;
-
-            // push child
-            arr.push(cloneChild);
-          });
-
-          // return array
-          return arr;
-        };
-
-        // flatten tree
-        this.flow.items = flatten(this.flow.tree);
+        // flatten items
+        this.initFLatten();
 
         // update
         this.refreshing = true;
@@ -368,6 +339,44 @@
         // set containers
         this.dragula.containers = [...(jQuery('.builder-elements', this.refs.placement).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())];
       });
+    }
+
+    /**
+     * Flattens items
+     */
+    initFLatten() {
+      // flattens a tree
+      const flatten = (children) => {
+        // get arr
+        const arr = [];
+
+        // return mappend children
+        children.map((child) => {
+          // set children
+          if (child.children) {
+            // loop children
+            for (let key in child.children) {
+              // push to flattened array
+              arr.push(...(flatten(child.children[key])));
+            }
+          }
+
+          // clone child
+          const cloneChild = JSON.parse(JSON.stringify(Object.assign({}, child, this.flow.items.find(item => item.uuid === child.uuid) || {})));
+
+          // delete fields
+          delete cloneChild.children;
+
+          // push child
+          arr.push(cloneChild);
+        });
+
+        // return array
+        return arr;
+      };
+
+      // flatten tree
+      this.flow.items = flatten(this.flow.tree);
     }
 
     /**
@@ -419,9 +428,12 @@
     /**
      * Initialize draggable logic 
      */
-    initConnectors() {
+    async initConnectors() {
       // return refreshing
       if (this.refreshing) return;
+
+      // timeout
+      await new Promise((resolve) => setTimeout(resolve, 250));
 
       // require plumb
       const plumb = require('jsplumb');
@@ -431,7 +443,7 @@
 
       // import defaults
       this.plumb.importDefaults({
-        Anchors : [[ 0.5, 1, 1, 1 ], [ 0.1, 0.2, 1, 1 ]],
+        Anchors : [[ 0.5, 1, 1, 1 ], [ 0.1, 0.1, 1, 1 ]],
         Connector : [ 'StateMachine', { } ],
         ConnectionsDetachable : false
       });
@@ -521,15 +533,10 @@
       // do draggable
       this.initDraggable();
       this.initScrollbar();
+      this.initConnectors();
 
       // on resize
       jQuery(window).on('resize', this.initScrollbar);
-
-      // timeout
-      setTimeout(() => {
-        // init connectors
-        this.initConnectors();
-      }, 500);
     });
 
     /**
