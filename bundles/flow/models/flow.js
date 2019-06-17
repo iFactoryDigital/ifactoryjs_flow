@@ -27,6 +27,7 @@ class Flow extends Model {
     const sanitised = {
       id         : this.get('_id') ? this.get('_id').toString() : null,
       tree       : this.get('tree') || [],
+      title      : this.get('title'),
       items      : this.get('items') || [],
       trigger    : this.get('trigger'),
       created_at : this.get('created_at'),

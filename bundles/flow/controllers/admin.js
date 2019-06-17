@@ -153,6 +153,7 @@ class FlowAdminController extends Controller {
 
     // set
     flow.set('tree', req.body.tree);
+    flow.set('title', req.body.title);
     flow.set('items', req.body.items);
     flow.set('trigger', req.body.trigger);
 
@@ -357,6 +358,56 @@ class FlowAdminController extends Controller {
       // return true
       return true;
     });
+    flow.action('model.set', {
+      tag   : 'action-model-set',
+      icon  : 'fa fa-plus',
+      title : 'Set Value',
+    }, (action, render) => {
+
+    }, async (opts, element, model) => {
+      // do to set
+      let toSet = model;
+
+      // check type
+      if (element.config.type === 'this') {
+        // send model
+        if (!(model instanceof Model)) return false;
+      } else if (element.confg.type === 'new') {
+        // get new model
+        const Mod = model(element.config.model);
+
+        // new model
+        toSet = new Mod();
+      } else if (element.config.type === 'existing') {
+        // get new model
+        const Mod = model(element.config.model);
+
+        // new model
+        if (element.config.query === 'id') {
+          // get model
+          toSet = await Mod.findById(element.config.id);
+        } else {
+          // get model
+          toSet = await Mod.where(element.config.where).findOne();
+        }
+      }
+
+      // set values
+      if (!toSet) return false;
+
+      // loop fields
+      for (const field of element.config.fields) {
+        // set field
+        // eslint-disable-next-line no-nested-ternary
+        toSet.set(field.name, field.type === 'code' ? safeEval(field.code, model) : (field.type === 'this' ? model : model.get(field.from)));
+      }
+
+      // save toSet
+      await toSet.save();
+
+      // return true
+      return true;
+    });
 
     // do initial timings
     flow.timing('delay', {
@@ -537,6 +588,10 @@ class FlowAdminController extends Controller {
       sort     : true,
       title    : 'Id',
       priority : 100,
+    }).column('title', {
+      sort     : true,
+      title    : 'Title',
+      priority : 90,
     });
 
     // add extra columns

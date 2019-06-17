@@ -79,6 +79,21 @@
           <div class="flow-container" ref="flow-container">
             <div class="flow-inner" style="{ this.width ? 'width : ' + this.width + 'rem' : '' }">
               <!-- trigger -->
+              
+              <div class="card card-flowing card-trigger bg-light mb-3" ref="info">
+                <div class="card-header">
+                  <div class="card-icon">
+                    <i class="fa fa-info" />
+                  </div>
+
+                  Flow Details
+                </div>
+                <div class="card-body">
+                  <div class="form-group m-0">
+                    <input name="title" class="form-control" ref="title" value={ flow.title } onchange={ onChangeTitle } id="flow-title" placeholder="Flow Title" />
+                  </div>
+                </div>
+              </div>
 
               <div class="card card-flowing card-trigger bg-light mb-4" ref="trigger">
                 <div class="card-header">
@@ -131,6 +146,20 @@
     if (!this.flow.render) {
       // set flow tree
       this.flow.render = {};
+    }
+
+    /**
+     * on change trigger
+     *
+     * @param {Event} e
+     */
+    onChangeTitle(e) {
+      // set trigger
+      this.hasUpdate  = true;
+      this.flow.title = this.refs.title.value;
+
+      // update view
+      this.update();
     }
 
     /**
