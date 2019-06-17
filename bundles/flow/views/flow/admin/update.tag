@@ -214,8 +214,6 @@
       // return nothing
       const item = this.flow.items.find(i => i.uuid === id);
 
-      console.log(id, item, el);
-
       // loop keys
       for (let key in el) {
         // set value
@@ -266,15 +264,15 @@
           return jQuery(container).hasClass('builder-elements');
         }
       }).on('drop', async (el, target, source, sibling) => {
-        // set update
-        this.hasUpdate = true;
-
         // check if drop to left
-        if (jQuery(el).closest('.builder-elements').length) {
+        if (!target || jQuery(el).closest('.builder-elements').length) {
           // check position
           if (jQuery(el).attr('position')) {
             // delete from position
             this.flow.tree = dotProp.delete(this.flow.tree, jQuery(el).attr('position'));
+
+            // set update
+            this.hasUpdate = true;
           }
 
           // update
@@ -286,6 +284,9 @@
           // return
           return;
         }
+
+        // set update
+        this.hasUpdate = true;
 
         // target/source
         target = jQuery(target);
