@@ -37,7 +37,7 @@
     </div>
   </div>
 
-  <flow-section columns={ 2 } position="{ opts.position }.children" class="d-block mx-2" children={ opts.getElement(opts.element).children || {} } set-element={ opts.setElement } get-element={ opts.getElement } />
+  <flow-section columns={ 2 } position="{ opts.position }.children" class="d-block mx-2" children={ opts.getElement(opts.element).children || {} } on-sidebar={ opts.onSidebar } set-element={ opts.setElement } get-element={ opts.getElement } />
 
   <script>
     /**

@@ -3,8 +3,13 @@
   <div class="d-flex">
     <div each={ col, i in cols } class="flow-elements py-4 { !(getOpts().children[col] || []).length ? ' flow-elements-empty' : '' }" position={ opts.position === 'tree' ? '' : opts.position + '.' + i }>
 
-      <div each={ element, a in getOpts().children[col] } class="flow-element" element-class={ getPosition(col) } data-is="flow-{ element.tag }" uuid={ getOpts().getElement(element).uuid } set-element={ getOpts().setElement } get-element={ getOpts().getElement } element={ getOpts().getElement(element) } child={ element } position="{ getOpts().position === 'tree' ? '' : getOpts().position + '.' + i + '.' }{ a }" />
+      <div each={ element, a in getOpts().children[col] } class="flow-element" element-class={ getPosition(col) } data-is="flow-{ element.tag }" uuid={ getOpts().getElement(element).uuid } set-element={ getOpts().setElement } get-element={ getOpts().getElement } element={ getOpts().getElement(element) } child={ element } on-sidebar={ getOpts().onSidebar } position="{ getOpts().position === 'tree' ? '' : getOpts().position + '.' + i + '.' }{ a }" />
 
+      <div class="flow-add">
+        <button class="btn btn-lg btn-block btn-secondary" onclick={ opts.onSidebar }>
+          Add Element
+        </button>
+      </div>
     </div>
   </div>
 
@@ -40,7 +45,7 @@
       if (i === 0) {
         col += ' ml-auto';        
       }
-      
+
       if (cols > 1) {
         // check first
         if (i === 0) {

@@ -10,124 +10,61 @@
     </admin-header>
     
     <div class="container-fluid" ref="placement">
+      <div ref="flow">
 
-      <div class="row">
-        <div class="col-3">
+        <div class="flow-container" ref="flow-container">
+          <div class="flow-inner" style="{ this.width ? 'width : ' + this.width + 'rem' : '' }">
+            <!-- trigger -->
+            
+            <div class="card card-flowing card-trigger bg-light mb-3" ref="info">
+              <div class="card-header">
+                <div class="card-icon">
+                  <i class="fa fa-info" />
+                </div>
 
-          <div class="card">
-            <div class="card-header">
-              <p class="lead m-0">
-                Flow Builder
-              </p>
-              <small class="d-block">
-                Drag and drop components to build your flow.
-              </small>
+                Flow Details
+              </div>
+              <div class="card-body">
+                <div class="form-group m-0">
+                  <input name="title" class="form-control" ref="title" value={ flow.title } onchange={ onChangeTitle } id="flow-title" placeholder="Flow Title" />
+                </div>
+              </div>
             </div>
-            <div class="card-body" if={ !this.refreshing }>
-              <p class="lead mb-3">
-                Actions
-              </p>
 
-              <div class="builder-elements">
-                <div class="card card-flow card-action mb-2" each={ action, i in opts.config.actions } type={ action.type } for="action">
-                  <div class="card-icon">
-                    <i class={ action.opts.icon } />
-                  </div>
-                  <div class="card-body">
-                    { action.opts.title }
-                  </div>
+            <div class="card card-flowing card-trigger bg-light mb-4" ref="trigger">
+              <div class="card-header">
+                <div class="card-icon">
+                  <i class="fa fa-bolt" />
                 </div>
+
+                Trigger on
+                
+                <eden-select class="d-inline-block w-auto ml-1" onchange={ onChangeTrigger } triggers={ opts.config.triggers } get-trigger={ getTrigger }>
+                  <option value="">Select Trigger</option>
+                  <option each={ trigger, i in opts.triggers } value={ trigger.type } selected={ (opts.getTrigger() || {}).type === trigger.type }>{ trigger.opts.title }</option>
+                </eden-select>
+              </div>
+              <div class="card-body text-center" if={ !getTrigger() }>
+                Please select your trigger
               </div>
 
-              <p class="lead my-3">
-                Timing
-              </p>
+              <div if={ getTrigger() } data-is="flow-trigger-{ getTrigger().type }" item={ getTrigger() } flow={ flow } on-data={ onDataTrigger } />
+            </div>
 
-              <div class="builder-elements">
-                <div class="card card-flow card-timing mb-2" each={ timing, i in opts.config.timings } type={ timing.type } for="timing">
-                  <div class="card-icon">
-                    <i class={ timing.opts.icon } />
-                  </div>
-                  <div class="card-body">
-                    { timing.opts.title }
-                  </div>
-                </div>
-              </div>
-              
-              <p class="lead my-3">
-                Logic
-              </p>
+            <!-- / trigger -->
 
-              <div class="builder-elements">
-                <div class="card card-flow card-logic mb-2" each={ logic, i in opts.config.logics } type={ logic.type } for="logic">
-                  <div class="card-icon">
-                    <i class={ logic.opts.icon } />
-                  </div>
-                  <div class="card-body">
-                    { logic.opts.title }
-                  </div>
-                </div>
-              </div>
-              
+            <div class="d-flex">
+              <flow-section position="tree" class="d-block mx-auto" columns="1" get-element={ getElement } set-element={ setElement } children={ { 0 : this.flow.tree } } if={ !this.refreshing } on-sidebar={ onSidebar } />
             </div>
           </div>
-
         </div>
 
-        <div class="col-9" ref="flow">
-
-          <div class="flow-container" ref="flow-container">
-            <div class="flow-inner" style="{ this.width ? 'width : ' + this.width + 'rem' : '' }">
-              <!-- trigger -->
-              
-              <div class="card card-flowing card-trigger bg-light mb-3" ref="info">
-                <div class="card-header">
-                  <div class="card-icon">
-                    <i class="fa fa-info" />
-                  </div>
-
-                  Flow Details
-                </div>
-                <div class="card-body">
-                  <div class="form-group m-0">
-                    <input name="title" class="form-control" ref="title" value={ flow.title } onchange={ onChangeTitle } id="flow-title" placeholder="Flow Title" />
-                  </div>
-                </div>
-              </div>
-
-              <div class="card card-flowing card-trigger bg-light mb-4" ref="trigger">
-                <div class="card-header">
-                  <div class="card-icon">
-                    <i class="fa fa-bolt" />
-                  </div>
-
-                  Trigger on
-                  
-                  <eden-select class="d-inline-block w-auto ml-1" onchange={ onChangeTrigger } triggers={ opts.config.triggers } get-trigger={ getTrigger }>
-                    <option value="">Select Trigger</option>
-                    <option each={ trigger, i in opts.triggers } value={ trigger.type } selected={ (opts.getTrigger() || {}).type === trigger.type }>{ trigger.opts.title }</option>
-                  </eden-select>
-                </div>
-                <div class="card-body text-center" if={ !getTrigger() }>
-                  Please select your trigger
-                </div>
-
-                <div if={ getTrigger() } data-is="flow-trigger-{ getTrigger().type }" item={ getTrigger() } flow={ flow } on-data={ onDataTrigger } />
-              </div>
-
-              <!-- / trigger -->
-
-              <div class="d-flex">
-                <flow-section position="tree" class="d-block mx-auto" columns="1" get-element={ getElement } set-element={ setElement } children={ { 0 : this.flow.tree } } if={ !this.refreshing } />
-              </div>
-            </div>
-          </div>
-
-        </div>
       </div>
     
     </div>
   </div>
+
+  <flow-sidebar ref="sidebar" config={ opts.config } refreshing={ this.refreshing } />
 
   <script>
     // mixins
@@ -192,6 +129,11 @@
       // update view
       this.update();
     }
+    
+    onSidebar(e) {
+      // open sidebar
+      this.refs.sidebar.show();
+    }
 
     /**
      * returns trigger
@@ -255,7 +197,7 @@
       const dotProp = require('dot-prop-immutable');
 
       // do dragula
-      this.dragula = dragula([...(jQuery('.builder-elements', this.refs.placement).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())], {
+      this.dragula = dragula([...(jQuery('.builder-elements', this.refs.sidebar.root).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())], {
         moves : (el, container, handle) => {
           return true;
         },
@@ -355,7 +297,8 @@
         this.refreshing = false;
         this.update();
       }).on('drag', (el, source) => {
-        
+        // hide sidebar
+        this.refs.sidebar.hide();
       }).on('dragend', () => {
         
       }).on('over', function (el, container) {
@@ -367,7 +310,7 @@
       // on update
       this.on('updated', () => {
         // set containers
-        this.dragula.containers = [...(jQuery('.builder-elements', this.refs.placement).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())];
+        this.dragula.containers = [...(jQuery('.builder-elements', this.refs.sidebar.root).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())];
       });
     }
 
@@ -414,7 +357,7 @@
      */
     initScrollbar() {
       // check width
-      checkWidth = (children) => {
+      const checkWidth = (children) => {
         // reduce for current level width addition value
         // how many branches max split off this trunk
         let topSplit = children.reduce((top, child) => {
@@ -462,45 +405,15 @@
       // return refreshing
       if (this.refreshing) return;
 
-      // timeout
-      await new Promise((resolve) => setTimeout(resolve, 250));
-
-      // require plumb
-      const plumb = require('jsplumb');
-
-      // get instance
-      this.plumb = this.plumb || jsPlumb.getInstance();
-
-      // import defaults
-      this.plumb.importDefaults({
-        Anchors : [[ 0.5, 1, 1, 1 ], [ 0.1, 0.1, 1, 1 ]],
-        Connector : [ 'StateMachine', { } ],
-        ConnectionsDetachable : false
-      });
-
-      // set container
-      this.plumb.setContainer(this.refs['flow-container']);
-
-      // delete everything
-      this.plumb.deleteEveryConnection();
-
       // check width
-      addConnectors = (children, parent, position) => {
+      const addConnectors = (children, parent, position) => {
         // loop children
         for (let i = 0; i < children.length; i++) {
           // set el
           const el = jQuery(`.flow-element[position="${(position.length ? position + '.' : '') + i}"] > .card`)[0];
           const pos = (position.length ? position + '.' : '') + i;
 
-          // connect
-          this.plumb.connect({
-            scope      : position,
-            source     : parent, 
-            target     : el,
-            overlays   : [['Arrow', { location : 1 }]],
-            endpoints  : ['Dot', 'Blank'],
-            detachable : false
-          });
+          console.log(pos, position, parent, jQuery(el).offset(), jQuery(parent).offset());
 
           // do children
           Object.keys(children[i].children || {}).forEach((col) => {
@@ -514,10 +427,7 @@
       };
 
       // add connectors
-      const top = this.refs['flow-container'].scrollTop;
-      this.refs['flow-container'].scrollTop = 0;
       addConnectors(this.flow.tree, this.refs.trigger, '');
-      this.refs['flow-container'].scrollTop = top;
     }
 
     /**
