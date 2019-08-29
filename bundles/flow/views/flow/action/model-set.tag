@@ -1,5 +1,5 @@
 <flow-action-model-set>
-  <div class="card card-flowing card-{ opts.element.for } mb-3 { opts.elementClass }">
+  <div class="card card-flowing card-{ opts.element.color || 'primary' } mb-3 { opts.elementClass }">
     <div class="card-header">
       <div class="card-icon">
         <i class={ opts.element.icon } />
@@ -9,68 +9,52 @@
 
     </div>
     <div class="card-body">
-      Set the value(s) of 
-      
-      <eden-select class="d-inline-block w-auto ml-1 bg-light" ref="type" onchange={ onChange } type={ (opts.element.config || {}).type } placeholder="Select Type(s)">
-        <option value="this" selected={ opts.type === 'this' || !opts.type }>This</option>
-        <option value="existing" selected={ opts.type === 'existing' }>An Existing</option>
-        <option value="new" selected={ opts.type === 'new' }>A New</option>
-      </eden-select>
+      Set the value(s) of this Model to:
 
-      Model
+      <div class="key-value mt-2">
+        <div class="row mb-2" each={ set, i in (opts.element.config || {}).sets || [] }>
+          <div class="col-5 pr-0">
+            <input class="form-control bg-light" ref="key" value={ set.key } type="text" onchange={ onChange } placeholder="Key" />
+          </div>
+          <div class="col-5 pr-0">
+            <input class="form-control bg-light" ref="value" value={ set.value } type="text" onchange={ onChange } placeholder="Value" />
+          </div>
+          <div class="col-2">
+            <button class="btn btn-block btn-danger" onclick={ onRemoveSet }>
+              <i class="fa fa-times" />
+            </button>
+          </div>
+        </div>
 
-      <span if={ ['new', 'existing'].includes((opts.element.config || {}).type || 'this') }>
-        <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChange } url="/admin/flow/models" model={ (opts.element.config || {}).model } placeholder="Select Model">
-          <option if={ opts.model } value={ opts.model } selected>{ opts.model }</option>
-        </eden-select>
-      </span>
-
-      <span if={ ['existing'].includes((opts.element.config || {}).type || 'this') }>
-        where
-        <eden-select ref="query" class="d-inline-block w-auto ml-1 bg-light" onchange={ onChange } type={ (opts.element.config || {}).query }>
-          <option value="value" selected={ opts.type === 'value' }>It's value</option>
-          <option value="id" selected={ opts.type === 'id' }>It's id</option>
-        </eden-select>
-
-        <span show={ ((opts.element.config || {}).query || 'value') === 'value' }>
-          of
-          <input class="form-control d-inline-block w-25 ml-1 bg-light" ref="of" value={ (opts.element.config || {}).of } type="text" onchange={ onChange } />
-          is
-          <eden-select ref="is" class="d-inline-block w-auto ml-1 bg-light" onchange={ onChange } is={ (opts.element.config || {}).is }>
-            <option value="eq" selected={ opts.is === 'eq' }>Equal To</option>
-            <option value="ne" selected={ opts.is === 'ne' }>Not Equal To</option>
-            <option value="gt" selected={ opts.is === 'gt' }>Greater Than</option>
-            <option value="lt" selected={ opts.is === 'lt' }>Less Than</option>
-          </eden-select>
-          <input class="form-control d-inline-block w-25 ml-1 bg-light" ref="value" value={ (opts.element.config || {}).value } type="text" onchange={ onChange } />
-        </span>
-
-        <span show={ (opts.element.config || {}).query === 'id' }>
-          is
-          <input class="form-control d-inline-block w-25 ml-1 bg-light" ref="id" value={ (opts.element.config || {}).id } type="text" onchange={ onChange } />
-        </span>
-      </span>
-
-      to:
+        <div class="row">
+          <div class="ml-auto col-2">
+            <button class="btn btn-block btn-success" onclick={ onAddSet }>
+              <i class="fa fa-plus" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
   <script>
+
     /**
      * on change timing
      *
      * @param {Event} e
      */
-    onChange(e) {
-      // set config
-      opts.element.config = {
-        id    : this.refs.id ? this.refs.id.value : null,
-        of    : this.refs.of ? this.refs.of.value : null,
-        is    : this.refs.is ? this.refs.is.val() : null,
-        type  : this.refs.type.val(),
-        value : this.refs.value ? this.refs.value.value : null,
-        query : this.refs.query ? this.refs.query.val() : null,
-      };
+    onAddSet(e) {
+      // prevent
+      e.preventDefault();
+      e.stopPropagation();
+
+      // set values
+      if (!opts.element.config) opts.element.config = {};
+      if (!opts.element.config.sets) opts.element.config.sets = [];
+
+      // push
+      opts.element.config.sets.push([]);
 
       // set element
       opts.setElement(opts.element.uuid, {
@@ -80,5 +64,46 @@
       // update
       this.update();
     }
+
+    /**
+     * on remove set
+     *
+     * @param {Event} e
+     */
+    onRemoveSet(e) {
+      // prevent
+      e.preventDefault();
+      e.stopPropagation();
+
+      // splice out
+      opts.element.config.sets.splice(e.item.i, 1);
+
+      // set element
+      opts.setElement(opts.element.uuid, {
+        config : opts.element.config,
+      });
+
+      // update
+      this.update();
+    }
+
+    /**
+     * on remove set
+     *
+     * @param {Event} e
+     */
+    onChange(e) {
+      // set value
+      opts.element.config.sets[e.item.i][jQuery(e.target).attr('ref')] = e.target.value;
+
+      // set element
+      opts.setElement(opts.element.uuid, {
+        config : opts.element.config,
+      });
+
+      // update
+      this.update();
+    }
+
   </script>
 </flow-action-model-set>

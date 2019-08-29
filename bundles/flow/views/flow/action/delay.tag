@@ -1,5 +1,5 @@
-<flow-timing-delay>
-  <div class="card card-flowing card-{ opts.element.for } mb-3 { opts.elementClass }">
+<flow-action-delay>
+  <div class="card card-flowing card-{ opts.element.color || 'primary' } mb-3 { opts.elementClass }">
     <div class="card-header">
       <div class="card-icon">
         <i class={ opts.element.icon } />
@@ -20,6 +20,7 @@
   </div>
   
   <script>
+    console.log(opts);
     /**
      * on change timing
      *
@@ -35,4 +36,4 @@
       });
     }
   </script>
-</flow-timing-delay>
+</flow-action-delay>

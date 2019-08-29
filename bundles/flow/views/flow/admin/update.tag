@@ -1,13 +1,7 @@
 <flow-admin-update-page>
   <div class="page page-fundraiser">
 
-    <admin-header title="Manage { this.flow.title ? '"' + this.flow.title + '"' : 'Flow' }" has-update={ this.hasUpdate } on-save={ save } loading={ loading }>
-      <yield to="right">
-        <button class={ 'btn btn-lg btn-success' : true, 'disabled' : opts.loading() } disabled={ opts.loading() } if={ opts.hasUpdate } onclick={ opts.onSave }>
-          { opts.loading('saving') ? 'Saving...' : 'Save' }
-        </button>
-      </yield>
-    </admin-header>
+    <admin-header title="Manage { this.flow.title ? '"' + this.flow.title + '"' : 'Flow' }" />
     
     <div class="container-fluid" ref="placement">
       <div ref="flow">
@@ -64,15 +58,14 @@
     </div>
   </div>
 
-  <flow-sidebar ref="sidebar" config={ opts.config } refreshing={ this.refreshing } />
+  <flow-sidebar ref="sidebar" config={ opts.config } refreshing={ this.refreshing } on-save={ save } loading={ loading } has-update={ hasUpdate } />
 
   <script>
     // mixins
     this.mixin('loading');
 
     // require deps
-    const uuid      = require('uuid');
-    const Scrollbar = require('perfect-scrollbar');
+    const uuid = require('uuid');
 
     // set flow
     this.flow       = opts.flow || {};
@@ -250,7 +243,6 @@
           // set uuid
           if (!element.type) {
             // set values
-            element.for  = jQuery(el).attr('for');
             element.type = jQuery(el).attr('type');
           } 
 
@@ -307,11 +299,30 @@
         
       });
 
+      // mouse moved
+      const mouseMoved = (e) => {
+        // width
+        const maxLeft = jQuery(window).width() - jQuery('.eden-blocks-sidebar').width();
+
+        // showing
+        if (e.pageX > maxLeft && !this.refs.sidebar.showing) {
+          // show
+          this.refs.sidebar.show();
+        } else if (e.pageX < maxLeft && this.refs.sidebar.showing) {
+          // hide
+          this.refs.sidebar.hide();
+        }
+      };
+
       // on update
       this.on('updated', () => {
         // set containers
         this.dragula.containers = [...(jQuery('.builder-elements', this.refs.sidebar.root).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())];
       });
+      this.on('unmount', () => {
+        jQuery('body').off('mousemove', mouseMoved);
+      });
+      jQuery('body').on('mousemove', mouseMoved);
     }
 
     /**
@@ -390,12 +401,6 @@
 
       // set width
       this.width = (width * 36);
-
-      // set up scrollbar
-      if (!this.scrollbar) {
-        // do scrollbar
-        this.scrollbar = new Scrollbar(this.refs['flow-container']);
-      }
     }
 
     /**
@@ -413,12 +418,21 @@
           const el = jQuery(`.flow-element[position="${(position.length ? position + '.' : '') + i}"] > .card`)[0];
           const pos = (position.length ? position + '.' : '') + i;
 
-          console.log(pos, position, parent, jQuery(el).offset(), jQuery(parent).offset());
+          // draw line
+          const parentBottom = jQuery(parent).offset().top + jQuery(parent).height();
+          const parentLeft = jQuery(parent).offset().left + (jQuery(parent).width() / 2);
+
+          // child
+          const childTop = jQuery(el).offset().top;
+          const childLeft = jQuery(el).offset().left;
+          
+          // draw line
+          // @todo
 
           // do children
           Object.keys(children[i].children || {}).forEach((col) => {
             // add connectors to children
-            addConnectors(children[i].children[col], el, pos + '.children.' + col);
+            addConnectors(children[i].children[col], el, `${pos}.children.${col}`);
           });
 
           // set parent

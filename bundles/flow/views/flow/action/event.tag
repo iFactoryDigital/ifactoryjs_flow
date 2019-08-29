@@ -1,5 +1,5 @@
 <flow-action-event>
-  <div class="card card-flowing card-{ opts.element.for } mb-3 { opts.elementClass }">
+  <div class="card card-flowing card-{ opts.element.color || 'primary' } mb-3 { opts.elementClass }">
     <div class="card-header">
       <div class="card-icon">
         <i class={ opts.element.icon } />

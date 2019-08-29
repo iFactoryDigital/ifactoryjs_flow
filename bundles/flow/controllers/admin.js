@@ -32,7 +32,6 @@ class FlowAdminController extends Controller {
     this.build = this.build.bind(this);
 
     // bind hooks
-    this.modelHook = this.modelHook.bind(this);
     this.flowSetupHook = this.flowSetupHook.bind(this);
 
     // set building
@@ -232,16 +231,7 @@ class FlowAdminController extends Controller {
    */
   async fieldAction(req, res) {
     // get fields
-    let fields = [];
-
-    // check for
-    if (req.body.for === 'action') {
-      fields = this.__helper.actions();
-    } else if (req.body.for === 'timing') {
-      fields = this.__helper.timings();
-    } else if (req.body.for === 'logic') {
-      fields = this.__helper.logics();
-    }
+    const fields = this.__helper.actions();
 
     // get field
     const field = fields.find(f => f.type === req.body.type);
@@ -273,35 +263,154 @@ class FlowAdminController extends Controller {
    * @pre flow.build
    */
   async flowSetupHook(flow) {
+    /*
+      EDEN TRIGGERS
+    */
+
     // do initial triggers
+    flow.trigger('cron', {
+      icon  : 'fa fa-clock',
+      title : 'Date/Time',
+    }, (action, render) => {
+
+    }, (run, cancel, query) => {
+      // run trigger
+      setInterval(() => run({
+        value : {},
+      }), 30000);
+      
+    });
     flow.trigger('hook', {
       icon  : 'fa fa-play',
       title : 'Named Hook',
     }, (action, render) => {
 
-    }, (opts, element, ...args) => {
+    }, (run, cancel, query) => {
+      // execute function
+      const execute = (...subArgs) => {
+        // find hook/type
+        const { hook, type } = subArgs.find(s => s.hook && s.type);
 
+        // check
+        if (!hook || !type) return;
+
+        // create trigger object
+        const data = {
+          opts  : { type, hook, when : type === 'pre' ? 'before' : 'after' },
+          value : { args : subArgs },
+          query : query.where({
+            'trigger.data.when' : type === 'pre' ? 'before' : 'after',
+            'trigger.data.hook' : hook,
+          }),
+        };
+
+        // run trigger
+        run(data);
+      };
+
+      // add hooks
+      this.eden.pre('*', execute);
+      this.eden.post('*', execute);
     });
     flow.trigger('event', {
       icon  : 'fa fa-calendar-exclamation',
       title : 'Named Event',
     }, (action, render) => {
 
-    }, (opts, element, ...args) => {
+    }, (run, cancel, query) => {
+      // execute function
+      const execute = (...subArgs) => {
+        // find hook/type
+        const { event } = subArgs.find(s => s.event);
 
+        // check
+        if (!event) return;
+
+        // create trigger object
+        const data = {
+          opts  : { event },
+          value : { args : subArgs },
+          query : query.where({
+            'trigger.data.event' : event,
+          }),
+        };
+
+        // run trigger
+        run(data);
+      };
+
+      // add hooks
+      this.eden.on('*', execute);
     });
     flow.trigger('model', {
       icon  : 'fa fa-calendar-exclamation',
       title : 'Model Change',
     }, (action, render) => {
 
-    }, (opts, element, ...args) => {
+    }, (run, cancel, query) => {
 
     });
+    flow.trigger('value', {
+      icon  : 'fa fa-calendar-exclamation',
+      title : 'Model Value',
+    }, (action, render) => {
 
+    }, (run, cancel, query) => {
+      // execute function
+      const execute = (model, a, b) => {
+        // check model
+        if (!(model instanceof Model)) return;
+
+        // set vars
+        let hook;
+        let type;
+
+        // chec vars
+        if (!b) {
+          hook = a.hook;
+          type = a.type;
+        } else {
+          hook = b.hook;
+          type = b.type;
+        }
+
+        // check
+        if (!hook || !type) return;
+
+        // get model type
+        const modelName = hook.split('.')[0];
+        const updateType = hook.split('.')[1];
+
+        // create trigger object
+        const data = {
+          opts  : { type : updateType, name : modelName, when : type === 'pre' ? 'before' : 'after' },
+          value : { model },
+          query : {
+            'trigger.data.when'  : type === 'pre' ? 'before' : 'after',
+            'trigger.data.model' : modelName,
+            'trigger.data.event' : updateType,
+          },
+        };
+
+        // run trigger
+        run(data);
+      };
+
+      // add hooks
+      this.eden.pre('*.update', execute);
+      this.eden.pre('*.remove', execute);
+      this.eden.pre('*.create', execute);
+      this.eden.post('*.update', execute);
+      this.eden.post('*.remove', execute);
+      this.eden.post('*.create', execute);
+    });
+
+    /*
+      EDEN ACTIONS
+    */
     // do initial actions
     flow.action('event.trigger', {
-      tag   : 'action-event',
+      tag   : 'event',
       icon  : 'fa fa-play',
       title : 'Trigger Event',
     }, (action, render) => {
@@ -318,7 +427,7 @@ class FlowAdminController extends Controller {
     });
     // do initial actions
     flow.action('email.send', {
-      tag   : 'action-email',
+      tag   : 'email',
       icon  : 'fa fa-envelope',
       title : 'Send Email',
     }, (action, render) => {
@@ -343,7 +452,7 @@ class FlowAdminController extends Controller {
       return true;
     });
     flow.action('hook.trigger', {
-      tag   : 'action-hook',
+      tag   : 'hook',
       icon  : 'fa fa-calendar-exclamation',
       title : 'Trigger Hook',
     }, (action, render) => {
@@ -358,65 +467,69 @@ class FlowAdminController extends Controller {
       // return true
       return true;
     });
-    flow.action('model.set', {
-      tag   : 'action-model-set',
+    flow.action('model.query', {
+      tag   : 'model-query',
       icon  : 'fa fa-plus',
-      title : 'Set Value',
+      title : 'Find Model(s)',
     }, (action, render) => {
 
-    }, async (opts, element, model) => {
-      // do to set
-      let toSet = model;
-
-      // check type
-      if (element.config.type === 'this') {
-        // send model
-        if (!(model instanceof Model)) return false;
-      } else if (element.confg.type === 'new') {
-        // get new model
-        const Mod = model(element.config.model);
-
-        // new model
-        toSet = new Mod();
-      } else if (element.config.type === 'existing') {
-        // get new model
-        const Mod = model(element.config.model);
-
-        // new model
-        if (element.config.query === 'id') {
-          // get model
-          toSet = await Mod.findById(element.config.id);
-        } else {
-          // get model
-          toSet = await Mod.where(element.config.where).findOne();
-        }
-      }
-
-      // set values
-      if (!toSet) return false;
-
-      // loop fields
-      for (const field of element.config.fields) {
-        // set field
-        // eslint-disable-next-line no-nested-ternary
-        toSet.set(field.name, field.type === 'code' ? safeEval(field.code, model) : (field.type === 'this' ? model : model.get(field.from)));
-      }
-
-      // save toSet
-      await toSet.save();
+    }, async (opts, element, data) => {
+      console.log(opts, element, data);
 
       // return true
       return true;
     });
+    flow.action('model.set', {
+      tag   : 'model-set',
+      icon  : 'fa fa-plus',
+      title : 'Set Value',
+    }, (action, render) => {
 
-    // do initial timings
-    flow.timing('delay', {
-      tag   : 'timing-delay',
+    }, async (opts, element, { model }) => {
+      // sets
+      element.config.sets.forEach((set) => {
+        // set
+        model.set(set.key, set.value);
+      });
+
+      // save toSet
+      await model.save();
+
+      // return true
+      return true;
+    });
+    flow.action('model.clone', {
+      tag   : 'model-clone',
+      icon  : 'fa fa-copy',
+      title : 'Clone Model',
+    }, (action, render) => {
+
+    }, async (opts, element, data) => {
+      // clone model
+      const { model } = data;
+
+      // got
+      const got = model.get();
+      delete got._id;
+
+      // new model
+      const NewModel = model(model.constructor.name);
+      const newModel = new NewModel(got);
+
+      // set new model
+      data.model = newModel;
+
+      // return true
+      return true;
+    });
+    flow.action('delay', {
+      tag   : 'delay',
       icon  : 'fa fa-stopwatch',
+      color : 'info',
       title : 'Time Delay',
     }, (action, render) => {
 
-    }, (opts, element, ...args) => {
+    }, (opts, element, data) => {
       return true;
     });
 
@@ -464,16 +577,18 @@ class FlowAdminController extends Controller {
     };
 
     // do initial logics
-    flow.logic('filter', {
-      tag   : 'logic-filter',
+    flow.action('filter', {
+      tag   : 'filter',
       icon  : 'fa fa-filter',
+      color : 'warning',
       title : 'Conditional Filter',
     }, (action, render) => {
 
     }, filterCheck);
-    flow.logic('condition.split', {
-      tag   : 'logic-split',
+    flow.action('condition.split', {
+      tag   : 'split',
       icon  : 'fa fa-code-merge',
+      color : 'warning',
       title : 'Conditional Split',
     }, (action, render) => {
 
@@ -490,58 +605,6 @@ class FlowAdminController extends Controller {
       // return true
       return true;
     });
-  }
-
-  /**
-   * setup flow hook
-   *
-   * @pre *.update
-   * @pre *.remove
-   * @pre *.create
-   * @post *.update
-   * @post *.create
-   * @post *.remove
-   */
-  async modelHook(model, a, b) {
-    // check model
-    if (!(model instanceof Model)) return;
-
-    // set vars
-    let hook;
-    let type;
-
-    // chec vars
-    if (!b) {
-      hook = a.hook;
-      type = a.type;
-    } else {
-      hook = b.hook;
-      type = b.type;
-    }
-
-    // check
-    if (!hook || !type) return;
-
-    // get model type
-    const modelName = hook.split('.')[0];
-    const updateType = hook.split('.')[1];
-
-    // query for triggers
-    const triggers = await Flow.where({
-      'trigger.type'       : 'model',
-      'trigger.data.when'  : type === 'pre' ? 'before' : 'after',
-      'trigger.data.model' : modelName,
-      'trigger.data.event' : updateType,
-    }).find();
-
-    // do triggers
-    if (triggers.length) {
-      // trigger flows
-      await Promise.all(triggers.map((trigger) => {
-        // trigger model update
-        return this.__helper.run(trigger, trigger.get('tree'), { type : updateType, name : modelName, when : type === 'pre' ? 'before' : 'after' }, model);
-      }));
-    }
   }
 
   // ////////////////////////////////////////////////////////////////////////////

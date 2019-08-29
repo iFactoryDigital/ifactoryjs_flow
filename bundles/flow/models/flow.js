@@ -42,16 +42,7 @@ class Flow extends Model {
       // await promise
       await Promise.all(sanitised.items.map(async (item) => {
         // set fields
-        let fields = [];
-
-        // check for
-        if (item.for === 'action') {
-          fields = helper.actions();
-        } else if (item.for === 'timing') {
-          fields = helper.timings();
-        } else if (item.for === 'logic') {
-          fields = helper.logics();
-        }
+        const fields = helper.actions();
 
         // get field
         const field = fields.find(f => f.type === item.type);

@@ -1,5 +1,5 @@
-<flow-logic-filter>
-  <div class="card card-flowing card-{ opts.element.for } mb-3 { opts.elementClass }">
+<flow-action-split>
+  <div class="card card-flowing card-{ opts.element.color || 'primary' } mb-3 { opts.elementClass }">
     <div class="card-header">
       <div class="card-icon">
         <i class={ opts.element.icon } />
@@ -9,7 +9,7 @@
 
     </div>
     <div class="card-body">
-      Only do the following flow elements when
+      Go down the left branch when
       <eden-select ref="type" class="d-inline-block w-auto ml-1 bg-light" onchange={ onChange } type={ (opts.element.config || {}).type }>
         <option value="value" selected={ opts.type === 'value' }>The value</option>
         <option value="code" selected={ opts.type === 'code' }>The code</option>
@@ -32,9 +32,13 @@
         <input class="form-control d-inline-block w-25 ml-1 bg-light" ref="code" value={ (opts.element.config || {}).code } type="text" onchange={ onChange } />
         returns true
       </span>
+
+      otherwise go down the right branch.
     </div>
   </div>
-  
+
+  <flow-section columns={ 2 } position="{ opts.position }.children" class="d-block mx-2" children={ opts.getElement(opts.element).children || {} } on-sidebar={ opts.onSidebar } set-element={ opts.setElement } get-element={ opts.getElement } />
+
   <script>
     /**
      * on change timing
@@ -53,5 +57,25 @@
         }
       });
     }
+
+    /**
+     * on mount function
+     */
+    this.on('mount', () => {
+      // return
+      if (!this.eden.frontend) return;
+
+      // set children
+      if (!opts.child.children) {
+        // set children
+        opts.child.children = [
+          [],
+          [],
+        ];
+
+        // update
+        opts.setElement(opts.element.uuid, {});
+      }
+    });
   </script>
-</flow-logic-filter>
+</flow-action-split>

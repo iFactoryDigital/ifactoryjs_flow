@@ -17,7 +17,7 @@
         </p>
 
         <div class="builder-elements">
-          <div class="card card-flow card-action mb-2" each={ action, i in opts.config.actions } type={ action.type } for="action">
+          <div each={ action, i in opts.config.actions } type={ action.type } class="card card-flow card-action card-{ action.opts.color || 'primary' } mb-2">
             <div class="card-icon">
               <i class={ action.opts.icon } />
             </div>
@@ -26,40 +26,14 @@
             </div>
           </div>
         </div>
-
-        <p class="lead my-3">
-          Timing
-        </p>
-
-        <div class="builder-elements">
-          <div class="card card-flow card-timing mb-2" each={ timing, i in opts.config.timings } type={ timing.type } for="timing">
-            <div class="card-icon">
-              <i class={ timing.opts.icon } />
-            </div>
-            <div class="card-body">
-              { timing.opts.title }
-            </div>
-          </div>
-        </div>
-        
-        <p class="lead my-3">
-          Logic
-        </p>
-
-        <div class="builder-elements">
-          <div class="card card-flow card-logic mb-2" each={ logic, i in opts.config.logics } type={ logic.type } for="logic">
-            <div class="card-icon">
-              <i class={ logic.opts.icon } />
-            </div>
-            <div class="card-body">
-              { logic.opts.title }
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="card-footer">
         <button type="button" class="btn btn-secondary float-right" onclick={ hide }>Close</button>
+
+        <button class={ 'btn btn-lg btn-success' : true, 'disabled' : opts.loading() } disabled={ opts.loading() } if={ opts.hasUpdate } onclick={ opts.onSave }>
+          { opts.loading('saving') ? 'Saving...' : 'Save' }
+        </button>
       </div>
     </div>
   </div>

@@ -64,7 +64,7 @@
       }
     }
   }
-  &.card-action {
+  &.card-primary {
     border-color      : theme-color(primary);
     border-left-width : ($border-width * 4);
 
@@ -75,8 +75,9 @@
         background : rgba(theme-color(primary), 0.15);
       }
     }
+    
   }
-  &.card-logic {
+  &.card-warning {
     border-color      : theme-color(warning);
     border-left-width : ($border-width * 4);
 
@@ -88,7 +89,19 @@
       }
     }
   }
-  &.card-timing {
+  &.card-success {
+    border-color      : theme-color(success);
+    border-left-width : ($border-width * 4);
+
+    .card-icon {
+      background : rgba(theme-color(success), 0.15);
+
+      > i {
+        background : rgba(theme-color(success), 0.15);
+      }
+    }
+  }
+  &.card-info {
     border-color      : theme-color(success);
     border-left-width : ($border-width * 4);
 

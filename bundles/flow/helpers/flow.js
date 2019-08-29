@@ -1,9 +1,10 @@
 
 // require dependencies
-const Helper = require('helper');
+const Helper  = require('helper');
+const dotProp = require('dot-prop');
 
 // require models
-const Form = model('form');
+const Flow = model('flow');
 
 /**
  * build placement helper
@@ -28,9 +29,7 @@ class FlowHelper extends Helper {
    */
   build() {
     // build placement helper
-    this.__logics = [];
     this.__actions = [];
-    this.__timings = [];
     this.__triggers = [];
   }
 
@@ -53,16 +52,7 @@ class FlowHelper extends Helper {
     // loop elements
     for (const element of elements) {
       // get fields
-      let fields = [];
-
-      // get element from here
-      if (element.for === 'action') {
-        fields = this.actions();
-      } else if (element.for === 'timing') {
-        fields = this.timings();
-      } else if (element.for === 'logic') {
-        fields = this.logics();
-      }
+      const fields = this.actions();
 
       // find field
       const field = await fields.find(f => f.type === element.type);
@@ -81,11 +71,11 @@ class FlowHelper extends Helper {
    * @param  {String}   type
    * @param  {Object}   opts
    * @param  {Function} render
-   * @param  {Function} run
+   * @param  {Function} daemon
    *
    * @return {*}
    */
-  trigger(type, opts, render, run) {
+  trigger(type, opts, render, daemon) {
     // check found
     const found = this.__triggers.find(field => field.type === type);
 
@@ -93,18 +83,46 @@ class FlowHelper extends Helper {
     if (!found) {
       // check found
       this.__triggers.push({
-        run,
         type,
         opts,
         render,
+        daemon,
       });
     } else {
       // set on found
-      found.run = run;
       found.type = type;
       found.opts = opts;
       found.render = render;
+      found.daemon = daemon;
     }
+
+    // run daemon
+    daemon(async (data = {}) => {
+      // get query
+      let query = data.query || {};
+
+      // trigger type
+      query = dotProp.set(query, 'trigger.type', type);
+
+      // query for triggers
+      const triggers = await (data.flow || Flow).where(query).find();
+
+      // set opts
+      if (!data.opts) data.opts = {};
+
+      // query
+      data.opts.query = query;
+      data.opts.start = new Date();
+
+      // do triggers
+      if (triggers.length) {
+        // trigger flows
+        triggers.forEach((trigger) => {
+          // trigger model update
+          return this.run(trigger, trigger.get('tree'), data.opts, data.value);
+        });
+      }
+    }, () => {}, Flow);
   }
 
   /**
@@ -140,80 +158,6 @@ class FlowHelper extends Helper {
   }
 
   /**
-   * register field
-   *
-   * @param  {String}   type
-   * @param  {Object}   opts
-   * @param  {Function} render
-   * @param  {Function} run
-   *
-   * @return {*}
-   */
-  timing(type, opts, render, run) {
-    // check found
-    const found = this.__timings.find(field => field.type === type);
-
-    // push field
-    if (!found) {
-      // check found
-      this.__timings.push({
-        run,
-        type,
-        opts,
-        render,
-      });
-    } else {
-      // set on found
-      found.run = run;
-      found.type = type;
-      found.opts = opts;
-      found.render = render;
-    }
-  }
-
-  /**
-   * register field
-   *
-   * @param  {String}   type
-   * @param  {Object}   opts
-   * @param  {Function} render
-   * @param  {Function} run
-   *
-   * @return {*}
-   */
-  logic(type, opts, render, run) {
-    // check found
-    const found = this.__logics.find(field => field.type === type);
-
-    // push field
-    if (!found) {
-      // check found
-      this.__logics.push({
-        run,
-        type,
-        opts,
-        render,
-      });
-    } else {
-      // set on found
-      found.run = run;
-      found.type = type;
-      found.opts = opts;
-      found.render = render;
-    }
-  }
-
-  /**
-   * gets fields
-   *
-   * @return {Array}
-   */
-  logics() {
-    // returns fields
-    return this.__logics;
-  }
-
-  /**
    * gets fields
    *
    * @return {Array}
@@ -224,16 +168,6 @@ class FlowHelper extends Helper {
   }
 
   /**
-   * gets fields
-   *
-   * @return {Array}
-   */
-  timings() {
-    // returns fields
-    return this.__timings;
-  }
-
-  /**
    * render fields
    *
    * @return {Array}
@@ -241,22 +175,10 @@ class FlowHelper extends Helper {
   render() {
     // map fields
     return {
-      logics : this.__logics.map((logic) => {
-        return {
-          type : logic.type,
-          opts : logic.opts,
-        };
-      }),
       actions : this.__actions.map((action) => {
         return {
           type : action.type,
           opts : action.opts,
-        };
-      }),
-      timings : this.__timings.map((timing) => {
-        return {
-          type : timing.type,
-          opts : timing.opts,
         };
       }),
       triggers : this.__triggers.map((trigger) => {
