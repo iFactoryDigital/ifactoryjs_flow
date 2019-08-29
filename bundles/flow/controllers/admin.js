@@ -519,7 +519,7 @@ class FlowAdminController extends Controller {
       });
 
       // return true
-      return (await query.find()).map((item) => {
+      return (await query.limit(element.config.count || 1).find()).map((item) => {
         // clone data
         const cloneData = Object.assign({}, data, {
           model : item,

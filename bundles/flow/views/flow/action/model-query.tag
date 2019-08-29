@@ -9,13 +9,14 @@
 
     </div>
     <div class="card-body">
-      Find the model
+      Find 
 
+      <input class="form-control d-inline-block w-25 ml-1 bg-light" ref="count" value={ (opts.element.config || {}).count || 1 } type="number" onchange={ onCount } />
       <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeModel } url="/admin/flow/models" model={ (opts.element.config || {}).model } placeholder="Select Model">
         <option if={ opts.model } value={ opts.model } selected>{ opts.model }</option>
       </eden-select>
 
-      where
+      model(s) where
 
       <div class="key-value mt-2">
         <div class="row mb-2" each={ set, i in (opts.element.config || {}).queries || [] }>
@@ -134,7 +135,23 @@
       // set value
       opts.element.config.queries[e.item.i].type = jQuery(e.target).attr('data-type');
 
-      console.log(opts.element.config.queries);
+      // set element
+      opts.setElement(opts.element.uuid, {
+        config : opts.element.config,
+      });
+
+      // update
+      this.update();
+    }
+
+    /**
+     * on remove set
+     *
+     * @param {Event} e
+     */
+    onCount(e) {
+      // set value
+      opts.element.config.count = parseInt(jQuery(e.target).val());
 
       // set element
       opts.setElement(opts.element.uuid, {
