@@ -415,11 +415,12 @@ class FlowAdminController extends Controller {
       title : 'Trigger Event',
     }, (action, render) => {
 
-    }, (opts, element, ...args) => {
+    }, (opts, element, data) => {
+      console.log(data);
       // trigger event
       if ((element.config || {}).event) {
         // trigger event
-        this.eden.emit(`flow:event.${element.config.event}`, ...args);
+        this.eden.emit(`flow:event.${element.config.event}`, data);
       }
 
       // return true
@@ -474,10 +475,59 @@ class FlowAdminController extends Controller {
     }, (action, render) => {
 
     }, async (opts, element, data) => {
-      console.log(opts, element, data);
+      // query for data
+      const Model = model(element.config.model);
+
+      // create query
+      let query = Model;
+
+      // sanitise model
+      if (data.model) data.model = await data.model.sanitise();
+
+      // loop queries
+      element.config.queries.forEach((q) => {
+        // get values
+        const { method, type } = q;
+        let { key, value } = q;
+
+        // data
+        key = tmpl.tmpl(key, data);
+        value = tmpl.tmpl(value, data);
+
+        // check type
+        if (type === 'number') {
+          // parse
+          value = parseFloat(value);
+        } else if (type === 'boolean') {
+          // set value
+          value = value.toLowerCase() === 'true';
+        }
+
+        // add to query
+        if (method === 'eq' || !method) {
+          // query
+          query = query.where({
+            [key] : value,
+          });
+        } else if (['gt', 'lt'].includes(method)) {
+          // set gt/lt
+          query = query[method](key, value);
+        } else if (method === 'ne') {
+          // not equal
+          query = query.ne(key, value);
+        }
+      });
 
       // return true
-      return true;
+      return (await query.find()).map((item) => {
+        // clone data
+        const cloneData = Object.assign({}, data, {
+          model : item,
+        }, {});
+
+        // return clone data
+        return cloneData;
+      });
     });
     flow.action('model.set', {
       tag   : 'model-set',

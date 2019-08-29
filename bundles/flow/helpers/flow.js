@@ -48,9 +48,12 @@ class FlowHelper extends Helper {
    * @param {Object} opts 
    * @param {...any} args 
    */
-  async run(flow, elements, opts, ...args) {
+  async run(flow, elements, opts, value) {
     // loop elements
-    for (const element of elements) {
+    for (let i = 0; i < elements.length; i++) {
+      // element
+      const element = elements[i];
+
       // get fields
       const fields = this.actions();
 
@@ -58,11 +61,24 @@ class FlowHelper extends Helper {
       const field = await fields.find(f => f.type === element.type);
 
       // return if field not found
-      if (!field) return;
+      if (!field) return null;
+
+      // set ran
+      const ran = await field.run(Object.assign({}, { flow }, opts), Object.assign({}, element, flow.get('items').find(i => i.uuid === element.uuid)), value);
 
       // break flow if not true
-      if (await field.run(Object.assign({}, { flow }, opts), Object.assign({}, element, flow.get('items').find(i => i.uuid === element.uuid)), ...args) !== true) return;
+      if (ran === true) continue;
+      if (Array.isArray(ran)) {
+        // split out into multiple
+        return await Promise.all(ran.map(val => this.run(flow, elements.slice(i + 1), opts, val)));
+      }
+
+      // return on nothing
+      return null;
     }
+
+    // return
+    return null;
   }
 
   /**
