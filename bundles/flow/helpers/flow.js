@@ -3,9 +3,6 @@
 const Helper  = require('helper');
 const dotProp = require('dot-prop');
 
-// require models
-const Flow = model('flow');
-
 /**
  * build placement helper
  */
@@ -88,12 +85,19 @@ class FlowHelper extends Helper {
    * @param  {Object}   opts
    * @param  {Function} render
    * @param  {Function} daemon
+   * @param  {Function} save
    *
    * @return {*}
    */
-  trigger(type, opts, render, daemon) {
+  trigger(type, opts, render, daemon, save, start) {
     // check found
     const found = this.__triggers.find(field => field.type === type);
+
+    // require models
+    const Flow = model('flow');
+
+    // return found
+    if (!opts) return found;
 
     // push field
     if (!found) {
@@ -103,41 +107,61 @@ class FlowHelper extends Helper {
         opts,
         render,
         daemon,
+        save,
+        start,
       });
     } else {
       // set on found
       found.type = type;
       found.opts = opts;
+      found.save = save;
+      found.start = start;
       found.render = render;
       found.daemon = daemon;
     }
 
     // run daemon
     daemon(async (data = {}) => {
-      // get query
-      let query = data.query || {};
-
-      // trigger type
-      query = dotProp.set(query, 'trigger.type', type);
-
       // query for triggers
-      const triggers = await (data.flow || Flow).where(query).find();
+      const triggers = await (data.query || Flow).where({
+        'trigger.type' : type,
+      }).find();
 
       // set opts
       if (!data.opts) data.opts = {};
 
       // query
-      data.opts.query = query;
       data.opts.start = new Date();
 
       // do triggers
-      if (triggers.length) {
-        // trigger flows
-        triggers.forEach((trigger) => {
-          // trigger model update
-          return this.run(trigger, trigger.get('tree'), data.opts, data.value);
-        });
-      }
+      if (!triggers.length) return;
+
+      // trigger flows
+      triggers.forEach(async (trigger) => {
+        // start
+        const t = this.trigger(trigger.get('trigger.type'));
+
+        // check start
+        if (t.start) {
+          // start
+          await t.start(data, trigger);
+        }
+
+        // set running
+        trigger.set('running_at', new Date());
+
+        // save trigger
+        await trigger.save();
+
+        // trigger model update
+        await this.run(trigger, trigger.get('tree'), data.opts, data.value);
+
+        // set running
+        trigger.unset('running_at');
+
+        // save trigger
+        await trigger.save();
+      });
     }, () => {}, Flow);
   }
 
@@ -212,4 +236,4 @@ class FlowHelper extends Helper {
  *
  * @return {FlowHelper}
  */
-module.exports = FlowHelper;
+module.exports = new FlowHelper();

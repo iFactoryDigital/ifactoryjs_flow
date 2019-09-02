@@ -2,6 +2,9 @@
 // require local dependencies
 const Model = require('model');
 
+// load flow helper
+const FlowHelper = helper('flow');
+
 /**
  * create Flow model
  */
@@ -22,7 +25,7 @@ class Flow extends Model {
    *
    * @return {*}
    */
-  async sanitise(helper) {
+  async sanitise() {
     // return object
     const sanitised = {
       id         : this.get('_id') ? this.get('_id').toString() : null,
@@ -42,7 +45,7 @@ class Flow extends Model {
       // await promise
       await Promise.all(sanitised.items.map(async (item) => {
         // set fields
-        const fields = helper.actions();
+        const fields = FlowHelper.actions();
 
         // get field
         const field = fields.find(f => f.type === item.type);

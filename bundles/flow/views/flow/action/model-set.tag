@@ -17,7 +17,19 @@
             <input class="form-control bg-light" ref="key" value={ set.key } type="text" onchange={ onChange } placeholder="Key" />
           </div>
           <div class="col-5 pr-0">
-            <input class="form-control bg-light" ref="value" value={ set.value } type="text" onchange={ onChange } placeholder="Value" />
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  { capitalize(set.type || 'text') }
+                </button>
+                <div class="dropdown-menu">
+                  <button class="dropdown-item" onclick={ onType } data-type="text">Text</button>
+                  <button class="dropdown-item" onclick={ onType } data-type="number">Number</button>
+                  <button class="dropdown-item" onclick={ onType } data-type="boolean">Boolean</button>
+                </div>
+              </div>
+              <input class="form-control bg-light" ref="value" value={ set.value } type="text" onchange={ onChange } placeholder="Value" />
+            </div>
           </div>
           <div class="col-2">
             <button class="btn btn-block btn-danger" onclick={ onRemoveSet }>
@@ -40,6 +52,17 @@
   <script>
 
     /**
+     * capitilize string
+     */
+    capitalize(s) {
+      // check typeof
+      if (typeof s !== 'string') return '';
+
+      // return uppercase
+      return s.charAt(0).toUpperCase() + s.slice(1);
+    }
+
+    /**
      * on change timing
      *
      * @param {Event} e
@@ -54,7 +77,7 @@
       if (!opts.element.config.sets) opts.element.config.sets = [];
 
       // push
-      opts.element.config.sets.push([]);
+      opts.element.config.sets.push({});
 
       // set element
       opts.setElement(opts.element.uuid, {
@@ -93,8 +116,27 @@
      * @param {Event} e
      */
     onChange(e) {
+      console.log('on change', e, e.item);
       // set value
       opts.element.config.sets[e.item.i][jQuery(e.target).attr('ref')] = e.target.value;
+
+      // set element
+      opts.setElement(opts.element.uuid, {
+        config : opts.element.config,
+      });
+
+      // update
+      this.update();
+    }
+
+    /**
+     * on remove set
+     *
+     * @param {Event} e
+     */
+    onType(e) {
+      // set value
+      opts.element.config.sets[e.item.i].type = jQuery(e.target).attr('data-type');
 
       // set element
       opts.setElement(opts.element.uuid, {

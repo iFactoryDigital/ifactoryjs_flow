@@ -3,6 +3,7 @@
 const Grid       = require('grid');
 const tmpl       = require('riot-tmpl');
 const Model      = require('model');
+const moment     = require('moment');
 const safeEval   = require('safe-eval');
 const Controller = require('controller');
 
@@ -49,14 +50,11 @@ class FlowAdminController extends Controller {
    * builds customer admin controller
    */
   async build() {
-    // setup flow helper
-    this.__helper = new FlowHelper();
-
     // on ready
     await new Promise(resolve => this.eden.once('eden.ready', resolve));
 
     // flow setup
-    await this.eden.hook('flow.build', this.__helper);
+    await this.eden.hook('flow.build', FlowHelper);
   }
 
 
@@ -117,9 +115,9 @@ class FlowAdminController extends Controller {
 
     // Render page
     res.render('flow/admin/update', {
-      flow   : await flow.sanitise(this.__helper),
+      flow   : await flow.sanitise(),
       title  : create ? 'Create Flow' : `Update ${flow.get('_id')}`,
-      config : await this.__helper.render(),
+      config : await FlowHelper.render(),
     });
   }
 
@@ -156,6 +154,15 @@ class FlowAdminController extends Controller {
     flow.set('items', req.body.items);
     flow.set('trigger', req.body.trigger);
 
+    // ru save
+    const trigger = FlowHelper.trigger(flow.get('trigger.type'));
+
+    // trigger save
+    if (trigger && trigger.save) {
+      // save trigger
+      await trigger.save(flow.get('trigger.data'), flow);
+    }
+
     // save flow
     await flow.save();
 
@@ -163,15 +170,15 @@ class FlowAdminController extends Controller {
     if (!req.query.json) {
       // return render
       res.render('flow/admin/update', {
-        flow   : await flow.sanitise(this.__helper),
+        flow   : await flow.sanitise(),
         title  : create ? 'Create Flow' : `Update ${flow.get('_id')}`,
-        config : await this.__helper.render(),
+        config : await FlowHelper.render(),
       });
     }
 
     // return json
     res.json({
-      result  : await flow.sanitise(this.__helper),
+      result  : await flow.sanitise(),
       success : true,
     });
   }
@@ -231,7 +238,7 @@ class FlowAdminController extends Controller {
    */
   async fieldAction(req, res) {
     // get fields
-    const fields = this.__helper.actions();
+    const fields = FlowHelper.actions();
 
     // get field
     const field = fields.find(f => f.type === req.body.type);
@@ -274,11 +281,68 @@ class FlowAdminController extends Controller {
     }, (action, render) => {
 
     }, (run, cancel, query) => {
-      // run trigger
-      setInterval(() => run({
-        value : {},
-      }), 30000);
-      
+      // set interval for query
+      setInterval(async () => {
+        // set query
+        const q = query.lte('execute_at', new Date());
+
+        // run with query
+        await run({
+          query : q,
+          value : {},
+        });
+      }, 5000);
+    }, (element, flowModel) => {
+      // days
+      const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+
+      // parse next date
+      const previous = flowModel.get('executed_at') || new Date();
+      let next = moment();
+
+      // set time
+      if (element.time) {
+        // set time
+        next.set({
+          hour   : parseInt(element.time.split(':')[0], 10),
+          minute : parseInt(element.time.split(':')[1], 10),
+          second : 0,
+        });
+      }
+
+      // set day
+      if (element.when === 'week') {
+        // set next
+        next = next.day(days.indexOf((element.day || 'monday').toLowerCase()) + 1);
+      }
+
+      // check last executed
+      if (next.toDate() < new Date()) {
+        // set day
+        if (element.when === 'week') {
+          // add one week
+          next = next.add(7, 'days');
+        } else if (element.when === 'month') {
+          // add
+          next = next.add(1, 'months');
+        }
+      }
+
+      // set values
+      flowModel.set('executed_at', previous);
+      flowModel.set('execute_at', next.toDate());
+    }, (data, flowModel) => {
+      // check when
+      if (flowModel.get('trigger.data.when') === 'week') {
+        // set execute at
+        flowModel.set('execute_at', moment(flowModel.get('execute_at')).add(7, 'days').toDate());
+      } else if (flow.get('trigger.data.when') === 'month') {
+        // set execute at
+        flowModel.set('execute_at', moment(flowModel.get('execute_at')).add(1, 'month').toDate());
+      }
+
+      // set executed at
+      flowModel.set('executed_at', new Date());
     });
     flow.trigger('hook', {
       icon  : 'fa fa-play',
@@ -385,11 +449,11 @@ class FlowAdminController extends Controller {
         const data = {
           opts  : { type : updateType, name : modelName, when : type === 'pre' ? 'before' : 'after' },
           value : { model },
-          query : {
+          query : query.where({
             'trigger.data.when'  : type === 'pre' ? 'before' : 'after',
             'trigger.data.model' : modelName,
             'trigger.data.event' : updateType,
-          },
+          }),
         };
 
         // run trigger
@@ -416,7 +480,6 @@ class FlowAdminController extends Controller {
     }, (action, render) => {
 
     }, (opts, element, data) => {
-      console.log(data);
       // trigger event
       if ((element.config || {}).event) {
         // trigger event
@@ -433,20 +496,23 @@ class FlowAdminController extends Controller {
       title : 'Send Email',
     }, (action, render) => {
 
-    }, async (opts, element, model) => {
+    }, async (opts, element, data) => {
       // set config
       element.config = element.config || {};
 
+      // clone data
+      const newData = Object.assign({}, data);
+
       // send model
-      if (model instanceof Model) {
+      if (newData.model instanceof Model) {
         // sanitise model
-        model = await model.sanitise();
+        newData.model = await newData.model.sanitise();
       }
 
       // send email
-      await emailHelper.send((tmpl.tmpl(element.config.to || '', model)).split(',').map(i => i.trim()), 'blank', {
-        body    : tmpl.tmpl(element.config.body || '', model),
-        subject : tmpl.tmpl(element.config.subject || '', model),
+      await emailHelper.send((tmpl.tmpl(element.config.to || '', newData)).split(',').map(i => i.trim()), 'blank', {
+        body    : tmpl.tmpl(element.config.body || '', newData),
+        subject : tmpl.tmpl(element.config.subject || '', newData),
       });
 
       // return true
@@ -538,8 +604,21 @@ class FlowAdminController extends Controller {
     }, async (opts, element, { model }) => {
       // sets
       element.config.sets.forEach((set) => {
+        // set values
+        let { value } = set;
+        const { key, type } = set;
+
+        // check type
+        if (type === 'number') {
+          // parse
+          value = parseFloat(value);
+        } else if (type === 'boolean') {
+          // set value
+          value = value.toLowerCase() === 'true';
+        }
+        
         // set
-        model.set(set.key, set.value);
+        model.set(key, value);
       });
 
       // save toSet
@@ -555,15 +634,12 @@ class FlowAdminController extends Controller {
     }, (action, render) => {
 
     }, async (opts, element, data) => {
-      // clone model
-      const { model } = data;
-
       // got
-      const got = model.get();
+      const got = data.model.get();
       delete got._id;
 
       // new model
-      const NewModel = model(model.constructor.name);
+      const NewModel = model(data.model.constructor.name);
       const newModel = new NewModel(got);
 
       // set new model
@@ -650,7 +726,7 @@ class FlowAdminController extends Controller {
       const children = (element.children || [])[go ? 0 : 1] || [];
 
       // await trigger
-      await this.__helper.run(opts.flow, children, opts, ...args);
+      await FlowHelper.run(opts.flow, children, opts, ...args);
 
       // return true
       return true;
