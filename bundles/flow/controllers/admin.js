@@ -616,7 +616,7 @@ class FlowAdminController extends Controller {
           // set value
           value = value.toLowerCase() === 'true';
         }
-        
+
         // set
         model.set(key, value);
       });
