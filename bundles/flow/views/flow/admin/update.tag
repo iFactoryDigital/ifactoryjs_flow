@@ -9,7 +9,7 @@
         <div class="flow-container" ref="flow-container">
           <div class="flow-inner" style="{ this.width ? 'width : ' + this.width + 'rem' : '' }">
             <!-- trigger -->
-            
+
             <div class="card card-flowing card-trigger bg-light mb-3" ref="info">
               <div class="card-header">
                 <div class="card-icon">
@@ -32,7 +32,7 @@
                 </div>
 
                 Trigger on
-                
+
                 <eden-select class="d-inline-block w-auto ml-1" onchange={ onChangeTrigger } triggers={ opts.config.triggers } get-trigger={ getTrigger }>
                   <option value="">Select Trigger</option>
                   <option each={ trigger, i in opts.triggers } value={ trigger.type } selected={ (opts.getTrigger() || {}).type === trigger.type }>{ trigger.opts.title }</option>
@@ -192,7 +192,7 @@
       // do dragula
       this.dragula = dragula([...(jQuery('.builder-elements', this.refs.sidebar.root).toArray()), ...(jQuery('.flow-elements', this.refs.placement).toArray())], {
         moves : (el, container, handle) => {
-          return true;
+          return jQuery(handle).hasClass('card-header') || jQuery(handle).closest('.card-header').length || jQuery(handle).closest('.builder-elements').length;
         },
         copy : (el, container) => {
           // check container class
@@ -256,7 +256,7 @@
 
             // set element
             element = res.action;
-  
+
             // set render data
             this.flow.render[element.uuid] = res.data;
           }
@@ -292,11 +292,11 @@
         // hide sidebar
         this.refs.sidebar.hide();
       }).on('dragend', () => {
-        
+
       }).on('over', function (el, container) {
-        
+
       }).on('out', function (el, container) {
-        
+
       });
 
       // mouse moved
@@ -425,7 +425,7 @@
           // child
           const childTop = jQuery(el).offset().top;
           const childLeft = jQuery(el).offset().left;
-          
+
           // draw line
           // @todo
 

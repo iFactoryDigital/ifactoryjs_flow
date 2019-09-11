@@ -6,7 +6,7 @@
       <option value="before" selected={ opts.when.includes('before') }>Before</option>
       <option value="after" selected={ opts.when.includes('after') }>After</option>
     </eden-select>
-    
+
     the model
 
     <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeModel } url="/admin/flow/models" model={ this.data.model } placeholder="Select Model">

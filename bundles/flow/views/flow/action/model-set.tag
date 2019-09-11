@@ -48,7 +48,7 @@
       </div>
     </div>
   </div>
-  
+
   <script>
 
     /**
@@ -116,7 +116,6 @@
      * @param {Event} e
      */
     onChange(e) {
-      console.log('on change', e, e.item);
       // set value
       opts.element.config.sets[e.item.i][jQuery(e.target).attr('ref')] = e.target.value;
 

@@ -25,7 +25,7 @@
       <editor ref="body" label="Email Body" content={ (opts.element.config || {}).body } />
     </div>
   </div>
-  
+
   <script>
     /**
      * on change timing

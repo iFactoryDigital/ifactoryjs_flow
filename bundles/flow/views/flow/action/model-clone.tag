@@ -10,7 +10,7 @@
     </div>
     <div class="card-body">
       Clone
-      
+
       <eden-select class="d-inline-block w-auto ml-1 bg-light" ref="type" onchange={ onChange } type={ (opts.element.config || {}).type } placeholder="Select Type(s)">
         <option value="this" selected={ opts.type === 'this' || !opts.type }>This</option>
         <option value="existing" selected={ opts.type === 'existing' }>An Existing</option>

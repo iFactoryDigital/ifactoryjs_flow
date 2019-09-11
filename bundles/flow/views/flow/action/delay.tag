@@ -20,7 +20,6 @@
   </div>
   
   <script>
-    console.log(opts);
     /**
      * on change timing
      *

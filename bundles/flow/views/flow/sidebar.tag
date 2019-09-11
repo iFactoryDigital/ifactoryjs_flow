@@ -66,6 +66,6 @@
       // update
       this.update();
     }
-    
+
   </script>
 </flow-sidebar>

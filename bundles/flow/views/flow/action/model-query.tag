@@ -64,7 +64,7 @@
 
     </div>
   </div>
-  
+
   <script>
 
     /**
@@ -188,7 +188,7 @@
     onChangeModel(e) {
       // set config
       if (!opts.element.config) opts.element.config = {};
-      
+
       // set model
       opts.element.config.model = jQuery(e.target).val();
 

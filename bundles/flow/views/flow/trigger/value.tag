@@ -23,7 +23,7 @@
     onChangeWhen(e) {
       // set when
       this.data.when = jQuery(e.target).val();
-      
+
       // on data
       opts.onData(this.data);
     }
@@ -36,7 +36,7 @@
     onChangeModel(e) {
       // model
       this.data.model = jQuery(e.target).val();
-      
+
       // on data
       opts.onData(this.data);
     }
@@ -49,7 +49,7 @@
     onChangeEvent(e) {
       // set when
       this.data.event = jQuery(e.target).val();
-      
+
       // on data
       opts.onData(this.data);
     }

@@ -412,14 +412,6 @@ class FlowAdminController extends Controller {
     }, (action, render) => {
 
     }, (run, cancel, query) => {
-
-    });
-    flow.trigger('value', {
-      icon  : 'fa fa-calendar-exclamation',
-      title : 'Model Value',
-    }, (action, render) => {
-
-    }, (run, cancel, query) => {
       // execute function
       const execute = (model, a, b) => {
         // check model
@@ -467,6 +459,14 @@ class FlowAdminController extends Controller {
       this.eden.post('*.update', execute);
       this.eden.post('*.remove', execute);
       this.eden.post('*.create', execute);
+    });
+    flow.trigger('value', {
+      icon  : 'fa fa-calendar-exclamation',
+      title : 'Model Value',
+    }, (action, render) => {
+
+    }, (run, cancel, query) => {
+
     });
 
     /*
