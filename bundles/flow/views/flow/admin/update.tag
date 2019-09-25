@@ -122,7 +122,12 @@
       // update view
       this.update();
     }
-    
+
+    /**
+     * on sidebar
+     *
+     * {Event} e
+     */
     onSidebar(e) {
       // open sidebar
       this.refs.sidebar.show();

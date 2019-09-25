@@ -8,11 +8,11 @@
         </a>
       </yield>
     </admin-header>
-    
+
     <div class="container-fluid">
-    
+
       <grid ref="grid" grid={ opts.grid } table-class="table table-striped table-bordered" title="Flow Grid" />
-    
+
     </div>
   </div>
 </flow-admin-page>

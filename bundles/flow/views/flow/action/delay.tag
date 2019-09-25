@@ -18,7 +18,7 @@
       </eden-select>
     </div>
   </div>
-  
+
   <script>
     /**
      * on change timing
