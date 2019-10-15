@@ -1,8 +1,8 @@
 # EdenJS - Flow
-[![TravisCI](https://travis-ci.com/eden-js/flow.svg?branch=master)](https://travis-ci.com/eden-js/flow)
-[![Issues](https://img.shields.io/github/issues/eden-js/flow.svg)](https://github.com/eden-js/flow/issues)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/eden-js/flow)
-[![Awesome](https://img.shields.io/badge/awesome-true-green.svg)](https://github.com/eden-js/flow)
+[![TravisCI](https://travis-ci.com/ifactorydigital/ifactoryjs_flow.svg?branch=master)](https://travis-ci.com/ifactorydigital/ifactoryjs_flow)
+[![Issues](https://img.shields.io/github/issues/ifactorydigital/ifactoryjs_flow.svg)](https://github.com/ifactorydigital/ifactoryjs_flow/issues)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/ifactorydigital/ifactoryjs_flow)
+[![Awesome](https://img.shields.io/badge/awesome-true-green.svg)](https://github.com/ifactorydigital/ifactoryjs_flow)
 [![Discord](https://img.shields.io/discord/583845970433933312.svg)](https://discord.gg/5u3f3up)
 
 Flow Builder base logic component for [EdenJS](https://github.com/edenjs-cli)
@@ -24,7 +24,7 @@ No configuration is required for this module
 ## Models
 
 
-### `Flow` _[Usage](https://github.com/eden-js/flow/blob/master/bundles/flow/models/flow.js)_
+### `Flow` _[Usage](https://github.com/ifactorydigital/ifactoryjs_flow/blob/master/bundles/flow/models/flow.js)_
 
 Flow model consits of a single entry for flow created.
 
@@ -43,7 +43,7 @@ const data = await entry.sanitise();
 
 ## Hooks
 
-### `flow.build` _[Usage](https://github.com/eden-js/flow/blob/master/bundles/flow/controllers/admin.js#L59)_ _[Usage](https://github.com/eden-js/flow/blob/master/bundles/flow/controllers/admin.js#L263)_
+### `flow.build` _[Usage](https://github.com/ifactorydigital/ifactoryjs_flow/blob/master/bundles/flow/controllers/admin.js#L59)_ _[Usage](https://github.com/ifactorydigital/ifactoryjs_flow/blob/master/bundles/flow/controllers/admin.js#L263)_
 
 
 Flow Build hook fires any time we want to setup new flow elements.
@@ -66,7 +66,7 @@ Flow Build hook fires any time we want to setup new flow elements.
 
 ## Flow Elements
 
-### `trigger` _[Usage](https://github.com/eden-js/flow/blob/master/bundles/flow/controllers/admin.js#L270)_
+### `trigger` _[Usage](https://github.com/ifactorydigital/ifactoryjs_flow/blob/master/bundles/flow/controllers/admin.js#L270)_
 
 Flow Triggers are used to define when and how a flow should be started. 
 
@@ -100,7 +100,7 @@ Flow Triggers are used to define when and how a flow should be started.
   }
 ```
 
-### `action` _[Usage](https://github.com/eden-js/flow/blob/master/bundles/flow/controllers/admin.js#L428)_
+### `action` _[Usage](https://github.com/ifactorydigital/ifactoryjs_flow/blob/master/bundles/flow/controllers/admin.js#L428)_
 
 Flow Actions are used to define how this flow should proceed with data.
 
