@@ -6,6 +6,7 @@ const Model      = require('model');
 const moment     = require('moment');
 const safeEval   = require('safe-eval');
 const Controller = require('controller');
+const config     = require('config');
 
 // Require models
 const Flow = model('flow');
@@ -73,8 +74,8 @@ class FlowAdminController extends Controller {
    *
    * @icon     fa fa-bell
    * @menu     {ADMIN} Notifications
-   * @title    Notification Administration
-   * @parent   /admin/config
+   * @title    Flow Administration
+   * @parent   /admin/fleet/company
    * @route    {get} /
    * @layout   admin
    * @priority 10
@@ -318,8 +319,13 @@ class FlowAdminController extends Controller {
 
       // check last executed
       if (next.toDate() < new Date()) {
-        // set day
-        if (element.when === 'week') {
+        if (element.when === 'minute') {
+          // add one week
+          next = next.add(1, 'minute');
+        } else if (element.when === 'hour') {
+          // add one week
+          next = next.add(1, 'hour');
+        } else if (element.when === 'week') {
           // add one week
           next = next.add(7, 'days');
         } else if (element.when === 'month') {
@@ -336,9 +342,15 @@ class FlowAdminController extends Controller {
       if (flowModel.get('trigger.data.when') === 'week') {
         // set execute at
         flowModel.set('execute_at', moment(flowModel.get('execute_at')).add(7, 'days').toDate());
-      } else if (flow.get('trigger.data.when') === 'month') {
+      } else if (flowModel.get('trigger.data.when') === 'month') {
         // set execute at
         flowModel.set('execute_at', moment(flowModel.get('execute_at')).add(1, 'month').toDate());
+      } else if (flowModel.get('trigger.data.when') === 'minute') {
+        // set execute at
+        flowModel.set('execute_at', moment(new Date()).add(1, 'minute').toDate());
+      } else if (flowModel.get('trigger.data.when') === 'hour') {
+        // set execute at
+        flowModel.set('execute_at', moment(new Date()).add(1, 'hour').toDate());
       }
 
       // set executed at
@@ -509,12 +521,14 @@ class FlowAdminController extends Controller {
         newData.model = await newData.model.sanitise();
       }
 
-      // send email
-      await emailHelper.send((tmpl.tmpl(element.config.to || '', newData)).split(',').map(i => i.trim()), 'blank', {
-        body    : tmpl.tmpl(element.config.body || '', newData),
-        subject : tmpl.tmpl(element.config.subject || '', newData),
-      });
-
+      //Prevent send email in Dev
+      if (config.get('flowemail')) {
+        // send email
+        await emailHelper.send((tmpl.tmpl(element.config.to || '', newData)).split(',').map(i => i.trim()), 'blank', {
+          body    : tmpl.tmpl(element.config.body || '', newData),
+          subject : tmpl.tmpl(element.config.subject || '', newData),
+        });
+      }
       // return true
       return true;
     });

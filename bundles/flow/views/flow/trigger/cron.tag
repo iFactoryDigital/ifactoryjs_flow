@@ -4,11 +4,13 @@
 
     <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeWhen } placeholder="Select When" when={ this.data.when || '' }>
       <option>Select When</option>
+      <option value="hour" selected={ opts.when.includes('hour') }>Every Hour</option>
       <option value="week" selected={ opts.when.includes('week') }>Every Week</option>
       <option value="month" selected={ opts.when.includes('month') }>Every Month</option>
+      <option value="minute" selected={ opts.when.includes('minute') }>Every Minute</option>
     </eden-select>
 
-    on
+    <span if={ !['hour', 'minute'].includes(this.data.when) }>on</span>
 
     <span if={ this.data.when.includes('week') }>
       <eden-select class="d-inline-block w-auto ml-1 bg-light" onchange={ onChangeDay } placeholder="Select Day" day={ this.data.day || '' } days={ this.days }>
