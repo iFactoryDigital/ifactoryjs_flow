@@ -688,6 +688,8 @@ class FlowAdminController extends Controller {
       let value = model[element.config.of];
       const is = element.config.is || 'eq';
 
+      if (model && model.model) model = model.model;
+
       // check model
       if (model instanceof Model) {
         // get value from model
