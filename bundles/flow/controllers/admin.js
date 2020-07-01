@@ -697,7 +697,8 @@ class FlowAdminController extends Controller {
       }
 
       // check
-      if (is === 'eq' && value !== element.config.value) {
+      if (is === 'eq' && value && String(value) !== element.config.value) {
+        console.log(is +"="+value+"="+element.config.value);
         // return false
         return false;
       }
@@ -714,6 +715,13 @@ class FlowAdminController extends Controller {
         return false;
       }
 
+      console.log('=======');
+      console.log('is'+ is);
+      console.log(element.config.of);
+      console.log('value'+ value);
+      console.log(element.config.value);
+      console.log(opts);
+      
       // return false at every opportunity
       return true;
     };
