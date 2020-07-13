@@ -714,13 +714,6 @@ class FlowAdminController extends Controller {
         // return false
         return false;
       }
-
-      console.log('=======');
-      console.log('is'+ is);
-      console.log(element.config.of);
-      console.log('value'+ value);
-      console.log(element.config.value);
-      console.log(opts);
       
       // return false at every opportunity
       return true;
